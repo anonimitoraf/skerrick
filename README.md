@@ -12,6 +12,10 @@ WORK IN-PROGRESS
 ## Demos
 * [Basic usage](https://github.com/anonimitoraf/jive/blob/main/demos/jive-demo-1.gif)
 
+## Usage
+* `jive-start`
+* Select the code you want to evaluate then `jive-eval-region`
+
 ## Configuration
 * `jive--replete-js-path` (required) - Path to replete.js. See https://github.com/jamesdiacono/Replete/blob/trunk/replete.js
 

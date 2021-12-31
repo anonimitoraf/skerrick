@@ -11,6 +11,7 @@ WORK IN-PROGRESS
 
 ## Demos
 * Basic usage
+
 ![Basic usage](https://github.com/anonimitoraf/jive/blob/main/demos/jive-demo-1.gif)
 
 ## Configuration

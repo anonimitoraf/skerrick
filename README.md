@@ -10,9 +10,7 @@ Inspired by (check them out!):
 WORK IN-PROGRESS
 
 ## Demos
-* Basic usage
-
-![Basic usage](https://github.com/anonimitoraf/jive/blob/main/demos/jive-demo-1.gif)
+* [Basic usage](https://github.com/anonimitoraf/jive/blob/main/demos/jive-demo-1.gif)
 
 ## Configuration
 * `jive--replete-js-path` (required) - Path to replete.js. See https://github.com/jamesdiacono/Replete/blob/trunk/replete.js

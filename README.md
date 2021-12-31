@@ -10,6 +10,8 @@ Inspired by (check them out!):
 WORK IN-PROGRESS
 
 ## Demos
+* Basic
+https://user-images.githubusercontent.com/15933322/147826565-cc064509-9995-46ff-8c6e-3d66d50235fb.mp4
 
 ## Configuration
 * `jive--replete-js-path` (required) - Path to replete.js. See https://github.com/jamesdiacono/Replete/blob/trunk/replete.js

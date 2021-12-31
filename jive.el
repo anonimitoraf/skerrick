@@ -51,11 +51,11 @@
   (interactive)
   (unless (and jive--process (process-live-p jive--process))
     (if jive--replete-js-path
-        (user-error "jive--replete-js-path needs to be set!")
-      (setq jive--process (make-process :name "jive"
-                                        :buffer jive--process-buffer
-                                        :filter #'jive--process-filter
-                                        :command '("node" jive--replete-js-path "--experimental-import-meta-resolve" ))))))
+        (setq jive--process (make-process :name "jive"
+                                          :buffer jive--process-buffer
+                                          :filter #'jive--process-filter
+                                          :command (list "node" jive--replete-js-path "--experimental-import-meta-resolve" )))
+      (user-error "jive--replete-js-path needs to be set!"))))
 
 (defun jive-stop ()
   "Stop JIVE"

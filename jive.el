@@ -30,7 +30,7 @@
     (((class color) (background dark))
      :background "grey10"
      :foreground "white"
-     :box (:line-width -1 :color "grey20")))
+     :box (:line-width -1 :color "white")))
   "Face used to display evaluation results at the end of line."
   :group 'jive)
 
@@ -43,9 +43,9 @@
 
 (defun jive--propertize-error (error) (propertize error 'face '(:foreground "red")))
 
-(defun jive--display-overlay (value)
+(defun jive--display-overlay (value face)
   (overlay-put jive--eval-overlay 'before-string
-               (propertize value 'face 'jive-result-overlay-face)))
+               (propertize value 'face face)))
 
 (defun jive--append-to-process-buffer (value)
   (with-current-buffer jive--process-buffer
@@ -62,8 +62,9 @@
         ("out"          (jive--append-to-process-buffer data-value))
         ("err"          (jive--append-to-process-buffer (jive--propertize-error data-value)))
         ("exception"    (progn (jive--append-to-process-buffer (jive--propertize-error data-value))
-                               (jive--display-overlay (format "Error: See the %s buffer for details" jive--process-buffer))))
-        ("evaluation"   (jive--display-overlay (concat " => " data-value " ")))
+                               (jive--display-overlay (format "Error: See the %s buffer for details" jive--process-buffer)
+                                                      '(:foreground "red"))))
+        ("evaluation"   (jive--display-overlay (concat " => " data-value " ") 'jive-result-overlay-face))
         (_              (jive--append-to-process-buffer
                          (jive--propertize-error (format "Unexpected data type: %s. Data = %s" data-type portion))))))))
 

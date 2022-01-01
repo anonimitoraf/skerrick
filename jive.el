@@ -73,9 +73,9 @@
         jive--region-end (region-end))
   (let ((selected-code (format "%s" (buffer-substring-no-properties jive--region-beginning
                                                                     jive--region-end))))
-    ;; TODO Locator/file path
     (process-send-string jive--process (concat (json-serialize (list :platform platform
-                                                                     :source selected-code))
+                                                                     :source selected-code
+                                                                     :locator (buffer-file-name)))
                                                "\n"))))
 
 (defun jive-node-eval-region ()

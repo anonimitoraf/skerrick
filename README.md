@@ -1,5 +1,5 @@
 # JIVE
-**J**avascript **I**nteractive de**V**elopment **Environment** (I could've gone for JIDE but doesn't sound as nice and is also not an actual word ;))
+**J**avascript **I**nteractive de**V**elopment **E**nvironment (I could've gone for JIDE but doesn't sound as nice and is also not an actual word ;))
 
 REPL-driven development for Javascript in Emacs. Powered by [Replete](https://github.com/jamesdiacono/Replete)
 

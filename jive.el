@@ -68,18 +68,31 @@
   (when (and jive--process (process-live-p jive--process))
     (kill-process jive--process)))
 
-(defun jive-eval-region ()
-  "Evaluate the selected JS code"
-  (interactive)
+(defun jive--eval-region (platform)
   (setq jive--region-beginning (region-beginning)
         jive--region-end (region-end))
   (let ((selected-code (format "%s" (buffer-substring-no-properties jive--region-beginning
                                                                     jive--region-end))))
-    ;; TODO Un-hardcode platform
     ;; TODO Locator/file path
-    (process-send-string jive--process (concat (json-serialize (list :platform "node"
+    (process-send-string jive--process (concat (json-serialize (list :platform platform
                                                                      :source selected-code))
                                                "\n"))))
+
+(defun jive-node-eval-region ()
+  "Evaluate the selected JS code via Node"
+  (interactive)
+  (jive--eval-region "node"))
+
+(defun jive-deno-eval-region ()
+  "Evaluate the selected TS code via Deno"
+  (interactive)
+  (jive--eval-region "deno"))
+
+;; TODO
+;; (defun jive-browser-eval-region ()
+;;   "Evaluate the selected JS code via browser"
+;;   (interactive)
+;;   (jive--eval-region "browser"))
 
 (provide 'jive)
 ;;; jive.el ends here

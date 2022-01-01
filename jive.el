@@ -45,7 +45,7 @@
         ("out"          (jive--append-to-process-buffer data-value))
         ("err"          (jive--append-to-process-buffer (jive--propertize-error data-value)))
         ("exception"    (progn (jive--append-to-process-buffer (jive--propertize-error data-value))
-                               (popup-tip (format "Error: See % for details" jive--process-buffer)
+                               (popup-tip (format "Error: See the %s buffer for details" jive--process-buffer)
                                           :point jive--region-end)))
         ("evaluation"   (popup-tip (concat "=> " data-value) :point jive--region-end))
         (_              (jive--append-to-process-buffer

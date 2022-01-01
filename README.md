@@ -20,14 +20,13 @@ WORK IN-PROGRESS
 
 ## Configuration
 * `jive--replete-js-path` (required) - Path to replete.js. See https://github.com/jamesdiacono/Replete/blob/trunk/replete.js
+* `jive-result-overlay-face` - Face used to display evaluation results
 
 ## TODO - Bugs
-* Proper popups
-* Support for `require` (currently only `import` seems supported by Replete)
 * Support for Typescript in Replete. I get an acornJS error when I try to eval TS code
 * Support for browser JS
 
 ## TODO - Features
 * Evaluation of the entry file on start up - might have to prompt the user and/or support the configuration via elisp
 * A dedicated buffer for evaluating strings manually (like CIDER's)
-* Confirm with user that they want to exit JIVE
+* Confirm with user that they want to stop JIVE

@@ -21,15 +21,32 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'popup)
+
+(defface jive-result-overlay-face
+  '((((class color) (background light))
+     :background "grey90"
+     :foreground "black"
+     :box (:line-width -1 :color "yellow"))
+    (((class color) (background dark))
+     :background "grey10"
+     :foreground "white"
+     :box (:line-width -1 :color "grey20")))
+  "Face used to display evaluation results at the end of line."
+  :group 'jive)
 
 (defvar jive--process nil)
 (defvar jive--process-buffer "*jive-stdout-stderr*")
 (defvar jive--replete-js-path nil)
 (defvar jive--region-beginning nil)
 (defvar jive--region-end nil)
+(defvar jive--eval-overlay nil)
 
 (defun jive--propertize-error (error) (propertize error 'face '(:foreground "red")))
+
+(defun jive--display-overlay (value)
+  (overlay-put jive--eval-overlay 'before-string
+               (propertize value 'face 'jive-result-overlay-face)))
+
 (defun jive--append-to-process-buffer (value)
   (with-current-buffer jive--process-buffer
     (goto-char (point-max)) ; Append to buffer
@@ -45,9 +62,8 @@
         ("out"          (jive--append-to-process-buffer data-value))
         ("err"          (jive--append-to-process-buffer (jive--propertize-error data-value)))
         ("exception"    (progn (jive--append-to-process-buffer (jive--propertize-error data-value))
-                               (popup-tip (format "Error: See the %s buffer for details" jive--process-buffer)
-                                          :point jive--region-end)))
-        ("evaluation"   (popup-tip (concat "=> " data-value) :point jive--region-end))
+                               (jive--display-overlay (format "Error: See the %s buffer for details" jive--process-buffer))))
+        ("evaluation"   (jive--display-overlay (concat " => " data-value " ")))
         (_              (jive--append-to-process-buffer
                          (jive--propertize-error (format "Unexpected data type: %s. Data = %s" data-type portion))))))))
 
@@ -69,10 +85,17 @@
     (kill-process jive--process)))
 
 (defun jive--eval-region (platform)
-  (setq jive--region-beginning (region-beginning)
-        jive--region-end (region-end))
-  (let ((selected-code (format "%s" (buffer-substring-no-properties jive--region-beginning
-                                                                    jive--region-end))))
+  (let* ((beg (region-beginning))
+         (end (region-end))
+         (selected-code (format "%s" (buffer-substring-no-properties beg end))))
+    ;; Clean up previous eval overlay
+    (when (overlayp jive--eval-overlay) (delete-overlay jive--eval-overlay))
+    (save-excursion
+      (goto-char end)
+      ;; Make sure the overlay is actually at the end of the evaluated region, not on a newline
+      (skip-chars-backward "\r\n[:blank:]")
+      ;; Seems like the END arg of make-overlay is useless. Just use the same value as BEGIN
+      (setq jive--eval-overlay (make-overlay (point) (point) (current-buffer))))
     (process-send-string jive--process (concat (json-serialize (list :platform platform
                                                                      :source selected-code
                                                                      :locator (buffer-file-name)))

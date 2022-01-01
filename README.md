@@ -14,7 +14,9 @@ WORK IN-PROGRESS
 
 ## Usage
 * `jive-start`
-* Select the code you want to evaluate then `jive-eval-region`
+* Select the code you want to evaluate either:
+    * `jive-node-eval-region`
+    * `jive-deno-eval-region`
 
 ## Configuration
 * `jive--replete-js-path` (required) - Path to replete.js. See https://github.com/jamesdiacono/Replete/blob/trunk/replete.js

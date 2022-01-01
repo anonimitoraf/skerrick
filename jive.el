@@ -20,6 +20,7 @@
 ;;
 ;;; Code:
 
+(require 'cl-lib)
 (require 'popup)
 
 (defvar jive--process nil)
@@ -28,23 +29,27 @@
 (defvar jive--region-beginning nil)
 (defvar jive--region-end nil)
 
-(defun jive--process-filter (_process output)
-  ;; TODO Exempt the initial messages
-  ;; TODO Remove repetitive code
-  (let* ((stdout+return (when (string-match "<replete_stdout>\\(\\(?:.\\|\n\\)*\\)\n</replete_stdout>\\(.*\\)" output)
-                          (list (match-string-no-properties 1 output)
-                                (match-string-no-properties 2 output))))
-         (stdout (car stdout+return))
-         (stderr+return (when (string-match "<replete_stderr>\\(\\(?:.\\|\n\\)*\\)\n</replete_stderr>\\(.*\\)" output)
-                          (list (match-string-no-properties 1 output)
-                                (match-string-no-properties 2 output))))
-         (stderr (car stderr+return))
-         (return (or (cadr stdout+return) (cadr stdout+return) output)))
-    (with-current-buffer jive--process-buffer
-      (goto-char (point-max))
-      (when stdout (insert stdout ?\n))
-      (when stderr (insert (propertize stderr 'face '(:foreground "red")))))
-    (popup-tip (concat "=> " return) :point jive--region-end)))
+(defun jive--propertize-error (error) (propertize error 'face '(:foreground "red")))
+(defun jive--append-to-process-buffer (value)
+  (with-current-buffer jive--process-buffer
+    (goto-char (point-max)) ; Append to buffer
+    (insert value ?\n)))
+
+(defun jive--process-filter (_process data-raw)
+  (dolist (portion (cl-remove-if (lambda (s) (<= (string-width s) 0))
+                                 (split-string data-raw "\n")))
+    (let* ((data (json-parse-string portion :object-type 'plist))
+           (data-type (plist-get data :type))
+           (data-value (plist-get data :string)))
+      (pcase data-type
+        ("out"          (jive--append-to-process-buffer data-value))
+        ("err"          (jive--append-to-process-buffer (jive--propertize-error data-value)))
+        ("exception"    (progn (jive--append-to-process-buffer (jive--propertize-error data-value))
+                               (popup-tip (format "Error: See % for details" jive--process-buffer)
+                                          :point jive--region-end)))
+        ("evaluation"   (popup-tip (concat "=> " data-value) :point jive--region-end))
+        (_              (jive--append-to-process-buffer
+                         (jive--propertize-error (format "Unexpected data type: %s. Data = %s" data-type portion))))))))
 
 (defun jive-start ()
   "Start JIVE"

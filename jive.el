@@ -25,8 +25,8 @@
 (defvar jive--process nil)
 (defvar jive--process-buffer "*jive-stdout-stderr*")
 (defvar jive--replete-js-path nil)
-(defvar jive--region-beginning)
-(defvar jive--region-end)
+(defvar jive--region-beginning nil)
+(defvar jive--region-end nil)
 
 (defun jive--process-filter (_process output)
   ;; TODO Exempt the initial messages

@@ -1,5 +1,5 @@
 # JIVE
-**J**avascript **Interactive** de**V**elopment **Environment** (I could've gone for JIDE but doesn't sound as nice and is also not an actual word ;))
+**J**avascript **I**nteractive de**V**elopment **Environment** (I could've gone for JIDE but doesn't sound as nice and is also not an actual word ;))
 
 REPL-driven development for Javascript in Emacs. Powered by [Replete](https://github.com/jamesdiacono/Replete)
 
@@ -20,7 +20,8 @@ WORK IN-PROGRESS
 * `jive--replete-js-path` (required) - Path to replete.js. See https://github.com/jamesdiacono/Replete/blob/trunk/replete.js
 
 ## TODO
-* LICENSE
 * Proper popups
-* Support for not just NodeJS
+* Support for `require` (currently only `import` seems supported by Replete)
+* Support for Typescript in Replete. I get an acornJS error when I try to eval TS code
+* Support for browser JS
 * etc

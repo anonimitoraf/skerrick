@@ -1,4 +1,4 @@
-import { evaluate } from './api'
+import { evaluate } from './index'
 
 const ns1 = '/ns-1'
 const ns2 = '/ns-2'

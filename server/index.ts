@@ -17,13 +17,16 @@ let stderr = '';
 server.use(bodyParser.urlencoded());
 server.use(bodyParser.json());
 
-server.post('/eval/:modulePath', (req, res) => {
-  const modulePath = decodeURIComponent(req.params.modulePath);
+server.post('/eval', (req, res) => {
+  const { code, modulePath } = req.body;
+
+  if (!modulePath || !code) {
+    throw new Error(`Both modulePath and code are required in the req body!`);
+  }
   if (!path.isAbsolute(modulePath)) {
     return res.status(500).send(`Only absolute paths allowed! Got ${modulePath} instead`);
   }
 
-  const { code } = req.body;
   const result = evaluate(modulePath, code);
 
   res.status(200).send({ result, stdout, stderr });

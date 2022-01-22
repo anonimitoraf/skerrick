@@ -30,6 +30,8 @@ server.post('/eval', (req, res) => {
   const result = evaluate(modulePath, code);
 
   res.status(200).send({ result, stdout, stderr });
+
+  // Clean up for the next request
   stdout = '';
   stderr = '';
 })

@@ -8,6 +8,7 @@
     "target": "ES6",
     "esModuleInterop": true,
     "moduleResolution": "node",
+    "module": "CommonJS",
     "paths": {},
     "sourceMap": true,
     "sourceRoot": "/",
@@ -19,7 +20,8 @@
     "noImplicitReturns": false,
     "noUncheckedIndexedAccess": false,
     "noUnusedLocals": false,
-    "noUnusedParameters": false
+    "noUnusedParameters": false,
+    "strict": false
   },
   "include": ["./**/*.ts"],
   "exclude": [

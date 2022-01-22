@@ -1,23 +1,36 @@
 import * as babel from '@babel/core';
 import * as t from '@babel/types';
 import { NodePath } from '@babel/traverse';
-import assert from 'assert';
 
-/** Plan of attack:
- * - Top-level variable/function declarations and assignments
- *   get stored in a registry (a Map) of type "module-path" -> [ "vars_and_fns" ]
- * - Note that RHS are expressions. It's probably too hard to
- * - Imports are patched such that they access the aforementioned registry
- */
+const namespaces = new Map();
 
-// See https://stackoverflow.com/a/35874967
-// function updateModule(state, mutator) {
-//   const fileName = state.file.opts.filename;
-//   console.log('Updating module:', fileName);
-//   let members = modules.get(fileName) || [];
-//   members = mutator(members);
-//   modules.set(fileName, members);
-// }
+export function evaluate(fileName, code) {
+  const ns = namespaces.get(fileName) || {};
+  namespaces.set(fileName, ns);
+
+  const codeTransformed = transform(fileName, code)?.replace(/;$/, '');
+  // console.log('code transformed =', codeTransformed);
+  return eval(`with (ns) {
+    (function () {
+      "use strict";
+       ${codeTransformed}
+    })();
+  }`);
+}
+
+function registerValue(fileName, key, value) {
+  const ns = namespaces.get(fileName) || {};
+  namespaces.set(fileName, ns);
+  ns[key] = value;
+}
+
+function transform(fileName, code) {
+  const output = babel.transformSync(code, {
+    plugins: [transformer],
+    filename: fileName
+  });
+  return output?.code;
+}
 
 function extractFileName(state) {
   return state.file.opts.filename;
@@ -26,6 +39,18 @@ function extractFileName(state) {
 function transformer() {
   return {
     visitor: {
+      ExpressionStatement(path: NodePath<t.ExpressionStatement>, state) {
+        if (path.scope.block.type !== 'Program') {
+          return; // Not a global declaration
+        }
+
+        const isLastChild = path.getAllNextSiblings().length <= 0;
+        if (!isLastChild) return;
+
+        // E.g. `1 + 1`, we want to wrap as `return 1 + 1`
+        const toReturn = t.returnStatement(path.node.expression);
+        path.replaceWith(toReturn);
+      },
       VariableDeclaration(path: NodePath<t.VariableDeclaration>, state) {
         // console.log(path.scope.bindings);
         // console.log(Object.values(path.scope.bindings).map(v => v.path.scope));
@@ -36,7 +61,7 @@ function transformer() {
         for (const [key, binding] of Object.entries(path.scope.bindings)) {
           const uniqueId = path.scope.generateUid('var_' + key);
           const register = t.callExpression(
-            t.identifier('registerMember'), [
+            t.identifier(registerValue.name), [
             t.stringLiteral(fileName),
             t.stringLiteral(key),
             t.identifier(uniqueId)
@@ -54,7 +79,7 @@ function transformer() {
         }
         const uniqueId = path.scope.generateUid('fn_' + id.name);
         const register = t.callExpression(
-          t.identifier('registerMember'), [
+          t.identifier(registerValue.name), [
           t.stringLiteral(fileName),
           t.stringLiteral(id.name),
           t.identifier(uniqueId)
@@ -65,41 +90,3 @@ function transformer() {
     }
   }
 }
-
-function evaluate(code) {
-  const output = babel.transformSync(code, {
-    plugins: [transformer],
-    filename: '../blah.js'
-  });
-  return output?.code;
-}
-
-[
-  ...[
-  //   'const n = 1',
-  //   'const n = 1 + 1',
-  //   'const n = m + 1',
-  //   'const n = function () {}',
-  //   'let n'
-    '{ const x = 4 }'
-  ],
-  // ...[
-  //   'const [a, b] = [1, 2]',
-  //   'const [a, [b, c]] = [1, [2, 3]]',
-  // ],
-  // ...[
-  //   'const { a: A, b } = {}'
-  // ],
-  // ...[
-  //   'const f = function () {}'
-  // ],
-  ...[
-    `function f (a) {
-       function g () {}
-       const b = a + 1;
-     }`
-  ],
-].forEach(expr => {
-  console.log(evaluate(expr));
-  console.log();
-})

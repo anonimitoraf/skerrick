@@ -18,6 +18,8 @@ const ns2 = '/ns-2'
 // evaluate(ns1, 'const f = function (x) { return x * x; }')
 // evaluate(ns1, 'console.log(f(x))')
 console.log(evaluate(ns1, '1 + 1; 2 + 2;'))
+evaluate(ns1, 'function f() { for (let i = 0; i < 5; i++) { console.log(i); } }');
+evaluate(ns1, 'f()');
 
 // function f(ns) {
 //   with (ns) {

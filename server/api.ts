@@ -1,14 +1,57 @@
+import path from 'path';
 import * as babel from '@babel/core';
 import * as t from '@babel/types';
 import { NodePath } from '@babel/traverse';
+import express from 'express';
+import bodyParser from 'body-parser';
+import process from 'process';
+import stripColor from 'strip-color';
+import captureConsole from 'capture-console';
+
+const serverPort = 4321;
+const server = express();
+
+let stdout = '';
+let stderr = '';
+
+server.use(bodyParser.urlencoded());
+server.use(bodyParser.json());
+
+server.post('/eval/:modulePath', (req, res) => {
+  const modulePath = decodeURIComponent(req.params.modulePath);
+  if (!path.isAbsolute(modulePath)) {
+    return res.status(500).send(`Only absolute paths allowed! Got ${modulePath} instead`);
+  }
+
+  const { code } = req.body;
+  const result = evaluate(modulePath, code);
+
+  res.status(200).send({ result, stdout, stderr });
+  stdout = '';
+  stderr = '';
+})
+
+server.listen(serverPort, () => {
+  console.log(`JIVE server listening on port ${serverPort}`);
+
+  captureConsole.startCapture(process.stdout, function (v) {
+    stdout = stripColor(v);
+  });
+
+  captureConsole.startCapture(process.stderr, function (v) {
+    stderr = stripColor(v);
+  });
+});
+
+// --------------------------------------------------------------------------------------------------------
 
 const namespaces = new Map();
 
-export function evaluate(fileName, code) {
-  const ns = namespaces.get(fileName) || {};
-  namespaces.set(fileName, ns);
+export function evaluate(modulePath, code) {
+  const ns = namespaces.get(modulePath) || {};
+  namespaces.set(modulePath, ns);
 
-  const codeTransformed = transform(fileName, code)?.replace(/;$/, '');
+  const codeTransformed = transform(modulePath, code);
   // console.log('code transformed =', codeTransformed);
   return eval(`with (ns) {
     (function () {
@@ -18,16 +61,16 @@ export function evaluate(fileName, code) {
   }`);
 }
 
-function registerValue(fileName, key, value) {
-  const ns = namespaces.get(fileName) || {};
-  namespaces.set(fileName, ns);
+function registerValue(modulePath, key, value) {
+  const ns = namespaces.get(modulePath) || {};
+  namespaces.set(modulePath, ns);
   ns[key] = value;
 }
 
-function transform(fileName, code) {
+function transform(modulePath, code) {
   const output = babel.transformSync(code, {
     plugins: [transformer],
-    filename: fileName
+    filename: modulePath
   });
   return output?.code;
 }

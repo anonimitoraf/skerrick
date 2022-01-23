@@ -60,7 +60,11 @@ export function evaluate(modulePath, code) {
   return eval(`with (ns) {
     (function () {
       "use strict";
-       ${codeTransformed}
+       try {
+         ${codeTransformed}
+       } catch (e) {
+         console.error(e);
+       }
     })();
   }`);
 }

@@ -18,6 +18,9 @@ WORK IN-PROGRESS
 ## Configuration
 * `jive-result-overlay-face` - Face used to display evaluation results
 
+## Bugs
+* Requires and exports happen in the context of `jive/server/index.ts`. It should instead happen on the context of the passed in modulePath
+
 ## Roadmap
 * Get it into MELPA
 * Fill out the rest of this README

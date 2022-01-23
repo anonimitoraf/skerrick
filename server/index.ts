@@ -3,7 +3,6 @@ import * as babel from '@babel/core';
 import * as t from '@babel/types';
 import { NodePath } from '@babel/traverse';
 import express from 'express';
-import bodyParser from 'body-parser';
 import process from 'process';
 import stripColor from 'strip-color';
 import captureConsole from 'capture-console';
@@ -14,8 +13,8 @@ const server = express();
 let stdout = '';
 let stderr = '';
 
-server.use(bodyParser.urlencoded());
-server.use(bodyParser.json());
+server.use(express.urlencoded({ extended: true }));
+server.use(express.json());
 
 server.post('/eval', (req, res) => {
   const { code, modulePath } = req.body;

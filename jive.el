@@ -9,7 +9,7 @@
 ;; Version: 0.0.1
 ;; Keywords: javascript js repl repl-driven
 ;; Homepage: https://github.com/anonimitoraf/jive
-;; Package-Requires: ((emacs "27.1") (popup))
+;; Package-Requires: ((emacs "27.1") (request "0.2.0"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -21,24 +21,22 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'request)
 
 (defface jive-result-overlay-face
   '((((class color) (background light))
      :background "grey90"
      :foreground "black"
-     :box (:line-width -1 :color "yellow"))
+     :box (:line-width -1 :color "#ECBE7B"))
     (((class color) (background dark))
      :background "grey10"
-     :foreground "white"
-     :box (:line-width -1 :color "white")))
+     :foreground "#ECBE7B"
+     :box (:line-width -1 :color "#ECBE7B")))
   "Face used to display evaluation results at the end of line."
   :group 'jive)
 
-(defvar jive--process nil)
+(defvar jive--server-url "http://localhost:4321")
 (defvar jive--process-buffer "*jive-stdout-stderr*")
-(defvar jive--replete-js-path nil)
-(defvar jive--region-beginning nil)
-(defvar jive--region-end nil)
 (defvar jive--eval-overlay nil)
 
 (defun jive--propertize-error (error) (propertize error 'face '(:foreground "red")))
@@ -48,75 +46,62 @@
                (propertize value 'face face)))
 
 (defun jive--append-to-process-buffer (value)
-  (with-current-buffer jive--process-buffer
+  (with-current-buffer (get-buffer-create jive--process-buffer)
     (goto-char (point-max)) ; Append to buffer
     (insert value ?\n)))
 
-(defun jive--process-filter (_process data-raw)
-  (dolist (portion (cl-remove-if (lambda (s) (<= (string-width s) 0))
-                                 (split-string data-raw "\n")))
-    (let* ((data (json-parse-string portion :object-type 'plist))
-           (data-type (plist-get data :type))
-           (data-value (plist-get data :string)))
-      (pcase data-type
-        ("out"          (jive--append-to-process-buffer data-value))
-        ("err"          (jive--append-to-process-buffer (jive--propertize-error data-value)))
-        ("exception"    (progn (jive--append-to-process-buffer (jive--propertize-error data-value))
-                               (jive--display-overlay (format "Error: See the %s buffer for details" jive--process-buffer)
-                                                      '(:foreground "red"))))
-        ("evaluation"   (jive--display-overlay (concat " => " data-value " ") 'jive-result-overlay-face))
-        (_              (jive--append-to-process-buffer
-                         (jive--propertize-error (format "Unexpected data type: %s. Data = %s" data-type portion))))))))
+(defun jive--process-server-response (response)
+  (let* ((stdout (alist-get 'stdout response))
+          (stderr (alist-get 'stderr response))
+          (result (alist-get 'result response)))
+    (when stdout (jive--append-to-process-buffer stdout))
+    (when stderr (jive--append-to-process-buffer (jive--propertize-error stderr)))
+    (jive--display-overlay (format " => %s " (if result result "undefined")) 'jive-result-overlay-face)))
 
-(defun jive-start ()
-  "Start JIVE"
+(defun jive--send-eval-req (code module-path)
+  "Send CODE and MODULE-PATH to sever."
+  (request
+    (concat jive--server-url "/eval")
+    :type "POST"
+    :data (json-encode `(("code" . ,code) ("modulePath" . ,module-path)))
+    :parser 'json-read
+    :encoding 'utf-8
+    :headers '(("Content-Type" . "application/json"))
+    :success (cl-function (lambda (&key data &allow-other-keys)
+                            ;; (message "DATA %s" data)
+                            (jive--process-server-response data)))))
+
+(defun jive-remove-eval-overlay ()
   (interactive)
-  (unless (and jive--process (process-live-p jive--process))
-    (if jive--replete-js-path
-        (setq jive--process (make-process :name "jive"
-                                          :buffer jive--process-buffer
-                                          :filter #'jive--process-filter
-                                          :command (list "node" jive--replete-js-path "--experimental-import-meta-resolve" )))
-      (user-error "jive--replete-js-path needs to be set!"))))
+  (when (overlayp jive--eval-overlay) (delete-overlay jive--eval-overlay)))
 
-(defun jive-stop ()
-  "Stop JIVE"
+(defun jive-eval-region ()
+  "Evaluate the selected JS code."
   (interactive)
-  (when (and jive--process (process-live-p jive--process))
-    (kill-process jive--process)))
-
-(defun jive--eval-region (platform)
   (let* ((beg (region-beginning))
          (end (region-end))
          (selected-code (format "%s" (buffer-substring-no-properties beg end))))
     ;; Clean up previous eval overlay
-    (when (overlayp jive--eval-overlay) (delete-overlay jive--eval-overlay))
+    (jive-remove-eval-overlay)
     (save-excursion
       (goto-char end)
       ;; Make sure the overlay is actually at the end of the evaluated region, not on a newline
       (skip-chars-backward "\r\n[:blank:]")
       ;; Seems like the END arg of make-overlay is useless. Just use the same value as BEGIN
       (setq jive--eval-overlay (make-overlay (point) (point) (current-buffer))))
-    (process-send-string jive--process (concat (json-serialize (list :platform platform
-                                                                     :source selected-code
-                                                                     :locator (buffer-file-name)))
-                                               "\n"))))
+    (jive--send-eval-req selected-code (buffer-file-name))))
 
-(defun jive-node-eval-region ()
-  "Evaluate the selected JS code via Node"
-  (interactive)
-  (jive--eval-region "node"))
+;; (request
+;;   "http://localhost:4321/eval"
+;;   :type "POST"
+;;   :data (json-encode '(("code" . "throw new Error(\"blah\")") ("modulePath" . "/module-a.js")))
+;;   :parser 'json-read
+;;   :encoding 'utf-8
+;;   :headers '(("Content-Type" . "application/json"))
+;;   :success (cl-function (lambda (&key data &allow-other-keys)
+;;                           (setq temp-var data))))
 
-(defun jive-deno-eval-region ()
-  "Evaluate the selected TS code via Deno"
-  (interactive)
-  (jive--eval-region "deno"))
-
-;; TODO
-;; (defun jive-browser-eval-region ()
-;;   "Evaluate the selected JS code via browser"
-;;   (interactive)
-;;   (jive--eval-region "browser"))
+;; temp-var
 
 (provide 'jive)
 ;;; jive.el ends here

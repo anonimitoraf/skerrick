@@ -50,6 +50,7 @@ server.listen(serverPort, () => {
 // --------------------------------------------------------------------------------------------------------
 
 const namespaces = new Map();
+const namespaceExports = new Map<string, Map<string | Symbol, any>>();
 
 export function evaluate(modulePath, code) {
   const ns = namespaces.get(modulePath) || {};
@@ -69,13 +70,30 @@ export function evaluate(modulePath, code) {
   }`);
 }
 
-function registerValue(modulePath, key, value) {
+function namespaceRegisterValue(modulePath, key, value) {
   const ns = namespaces.get(modulePath) || {};
   namespaces.set(modulePath, ns);
   ns[key] = value;
+  return value;
 }
 
-function transform(modulePath, code) {
+function namespaceRegisterExport(modulePath, key) {
+  const ns = namespaceExports.get(modulePath) || new Map();
+  namespaceExports.set(modulePath, ns);
+  ns.set(key, key);
+  return key;
+}
+
+const defaultExportSym = Symbol('*defaultExport*');
+
+function namespaceRegisterDefaultExport(modulePath, value) {
+  const ns = namespaceExports.get(modulePath) || new Map();
+  namespaceExports.set(modulePath, ns);
+  ns.set(defaultExportSym, value);
+  return defaultExportSym.toString();
+}
+
+export function transform(modulePath, code) {
   const output = babel.transformSync(code, {
     plugins: [transformer],
     filename: modulePath
@@ -90,6 +108,18 @@ function extractFileName(state) {
 function transformer() {
   return {
     visitor: {
+      Program(path: NodePath<t.Program>, state) {
+        const fileName = extractFileName(state);
+        for (const [, binding] of Object.entries(path.scope.bindings)) {
+          const registerValue = t.callExpression(
+            t.identifier(namespaceRegisterValue.name), [
+            t.stringLiteral(fileName),
+            t.stringLiteral(binding.identifier.name),
+            binding.identifier
+          ]);
+          path.node.body.push(t.expressionStatement(registerValue));
+        }
+      },
       ExpressionStatement(path: NodePath<t.ExpressionStatement>, state) {
         if (path.scope.block.type !== 'Program') {
           return; // Not a global declaration
@@ -102,42 +132,61 @@ function transformer() {
         const toReturn = t.returnStatement(path.node.expression);
         path.replaceWith(toReturn);
       },
-      VariableDeclaration(path: NodePath<t.VariableDeclaration>, state) {
-        // console.log(path.scope.bindings);
-        // console.log(Object.values(path.scope.bindings).map(v => v.path.scope));
+      ExportNamedDeclaration(path: NodePath<t.ExportNamedDeclaration>, state) {
         const fileName = extractFileName(state);
-        if (path.scope.block.type !== 'Program') {
-          return; // Not a global declaration
+
+        // E.g. `export { x, y as y1 }`
+        if (path.node.specifiers.length > 0) {
+          // e.g. `export { x, y as y1 }`
+          for (const specifier of (path.node.specifiers || [])) {
+            if (specifier.type !== 'ExportSpecifier') continue;
+
+            const registerExport = t.callExpression(
+              t.identifier(namespaceRegisterExport.name), [
+              t.stringLiteral(fileName),
+              specifier.exported.type === 'StringLiteral' ? specifier.exported : t.stringLiteral(specifier.exported.name),
+              specifier.local
+            ]);
+            path.insertAfter(registerExport);
+          }
+          path.remove();
+          return;
         }
-        for (const [key, binding] of Object.entries(path.scope.bindings)) {
-          const uniqueId = path.scope.generateUid('var_' + key);
-          const register = t.callExpression(
-            t.identifier(registerValue.name), [
+
+        // E.g. `export const x = 1` => `const x = 1`
+        if (path.node.declaration) {
+          path.replaceWith(path.node.declaration);
+        }
+
+        for (const [, binding] of Object.entries(path.scope.bindings)) {
+          const registerExport = t.callExpression(
+            t.identifier(namespaceRegisterExport.name), [
             t.stringLiteral(fileName),
-            t.stringLiteral(key),
-            t.identifier(uniqueId)
+            t.stringLiteral(binding.identifier.name),
+            binding.identifier
           ]);
-          path.scope.rename(key, uniqueId);
-          path.insertAfter(register);
+          path.insertAfter(registerExport);
         }
       },
-      FunctionDeclaration(path: NodePath<t.FunctionDeclaration>, state) {
-        // console.log(path.scope.bindings);
-        const fileName = extractFileName(state);
-        const { id } = path.node;
-        if (path.scope.parentBlock.type !== 'Program' || !id) {
-          return; // Not a global declaration
-        }
-        const uniqueId = path.scope.generateUid('fn_' + id.name);
-        const register = t.callExpression(
-          t.identifier(registerValue.name), [
-          t.stringLiteral(fileName),
-          t.stringLiteral(id.name),
-          t.identifier(uniqueId)
-        ]);
-        path.scope.rename(id.name, uniqueId);
-        path.insertAfter(register);
-      }
+      // ExportDefaultDeclaration(path: NodePath<t.ExportDefaultDeclaration>, state) {
+      //   const fileName = extractFileName(state);
+      //   const registerDefaultExport = t.callExpression(
+      //     t.identifier(namespaceRegisterDefaultExport.name), [
+      //     t.stringLiteral(fileName),
+      //     t.identifier('defaultExportSym'),
+      //     path.node.declaration
+      //   ]);
+      //   path.replaceWith(path.node.declaration);
+      //   path.insertAfter(registerDefaultExport);
+      // }
     }
   }
+}
+
+function notImplementedYet(feature) {
+  throw Error('Sorry not implemented yet: ' + feature);
+}
+
+function unexpected(thing) {
+  throw Error('Unexpected: ' + thing);
 }

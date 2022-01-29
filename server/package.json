@@ -4,7 +4,8 @@
   "description": "",
   "main": "jive.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test:transform": "ts-node test/transform/index.ts",
+    "test:evaluate": "ts-node test/evaluate/index.ts"
   },
   "author": "Rafael Nicdao",
   "license": "GPL-3.0",
@@ -14,6 +15,7 @@
     "@babel/types": "^7.16.7",
     "capture-console": "^1.0.1",
     "express": "^4.17.2",
+    "lodash": "^4.17.21",
     "strip-color": "^0.1.0"
   },
   "devDependencies": {

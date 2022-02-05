@@ -1,7 +1,9 @@
 import _ from 'lodash';
+import path from 'path';
 import * as babel from '@babel/core';
 import * as t from '@babel/types';
 import { NodePath } from '@babel/traverse';
+import { PluginPass } from '@babel/core';
 
 const symbols = {
   "default": Symbol('*defaultExport*')
@@ -34,25 +36,32 @@ type ImportsByLocal = Map<Import['local'], Import>;
 const namespaceImports = new Map<Namespace, ImportsByLocal>();
 
 export function evaluate(namespace: string, code: string) {
+  const codeTransformed = transform(namespace, code);
+
   const ns: NamespaceValuesByKey = namespaces.get(namespace) || new Map();
   const nsImports: ImportsByLocal = namespaceImports.get(namespace) || new Map();
 
-  // NOTE THIS DOES NOT WORK SINCE IMPORTS NEED TO BE REGISTERED BEFORE EVALUATION. AT THE MOMENT
-  // THEY'RE REGISTERED DURING EVALUATION
   const nsImportsForScope = _([...nsImports.entries()])
     .map(([local, { importedNamespace, imported }]) => {
-      const exported = namespaceExports.get(importedNamespace)?.get(imported);
+      const nsExports = namespaceExports.get(importedNamespace);
+      const exported = nsExports?.get(imported);
       const exportedValue = exported && namespaces.get(importedNamespace)?.get(exported.local);
       return [local, exportedValue];
     })
     .fromPairs()
     .value();
-  console.log('EVAL ns imports ', nsImports);
 
-  const codeTransformed = transform(namespace, code);
+  const nsForScope = _([...ns.entries()])
+    .map(([k, v]) => [k, v])
+    .fromPairs()
+    .value();
+
+  // console.log('all imports', namespaceImports);
+  // console.log('ns imports for scope', nsImportsForScope);
+
   return eval(`
   with (nsImportsForScope) {
-    with (ns) {
+    with (nsForScope) {
       (function () {
         "use strict";
         try {
@@ -99,11 +108,10 @@ function namespaceRegisterImport(
   imported: Import['imported'],
   importedNamespace: string
 ) {
+  const absoluteImportedNamespace = path.join(path.dirname(namespace), importedNamespace)
   const nsImports: ImportsByLocal = namespaceImports.get(namespace) || new Map();
   namespaceImports.set(namespace, nsImports);
-  console.log('all ns imports', namespaceImports);
-  nsImports.set(local, { imported, local, importedNamespace });
-  console.log('ns imports', local, imported, importedNamespace);
+  nsImports.set(local, { imported, local, importedNamespace: absoluteImportedNamespace });
   return local;
 }
 
@@ -120,7 +128,7 @@ export function transform(namespace: string, code: string) {
     plugins: [transformer],
     filename: namespace,
     parserOpts: {
-      allowUndeclaredExports: true
+      allowUndeclaredExports: true,
     }
   });
   return output?.code;
@@ -133,7 +141,7 @@ function extractFileName(state) {
 function transformer() {
   return {
     visitor: {
-      Program(path: NodePath<t.Program>, state) {
+      Program(path: NodePath<t.Program>, state: PluginPass) {
         const fileName = extractFileName(state);
         for (const [, binding] of Object.entries(path.scope.bindings)) {
           const registerValue = t.callExpression(
@@ -145,7 +153,7 @@ function transformer() {
           path.node.body.push(t.expressionStatement(registerValue));
         }
       },
-      ExpressionStatement(path: NodePath<t.ExpressionStatement>, state) {
+      ExpressionStatement(path: NodePath<t.ExpressionStatement>, state: PluginPass) {
         if (path.scope.block.type !== 'Program') {
           return; // Not a global declaration
         }
@@ -157,7 +165,7 @@ function transformer() {
         const toReturn = t.returnStatement(path.node.expression);
         path.replaceWith(toReturn);
       },
-      ExportNamedDeclaration(path: NodePath<t.ExportNamedDeclaration>, state) {
+      ExportNamedDeclaration(path: NodePath<t.ExportNamedDeclaration>, state: PluginPass) {
         const fileName = extractFileName(state);
 
         // E.g. `export { x, y as y1 }`
@@ -169,8 +177,8 @@ function transformer() {
             const registerExport = t.callExpression(
               t.identifier(namespaceRegisterExport.name), [
               t.stringLiteral(fileName),
+              t.stringLiteral(specifier.local.name),
               specifier.exported.type === 'StringLiteral' ? specifier.exported : t.stringLiteral(specifier.exported.name),
-              specifier.local
             ]);
             path.insertAfter(registerExport);
           }
@@ -188,7 +196,7 @@ function transformer() {
             t.identifier(namespaceRegisterExport.name), [
             t.stringLiteral(fileName),
             t.stringLiteral(binding.identifier.name),
-            binding.identifier
+            t.stringLiteral(binding.identifier.name)
           ]);
           path.insertAfter(registerExport);
         }
@@ -204,7 +212,7 @@ function transformer() {
       //   path.replaceWith(path.node.declaration);
       //   path.insertAfter(registerDefaultExport);
       // }
-      ImportDeclaration(path: NodePath<t.ImportDeclaration>, state) {
+      ImportDeclaration(path: NodePath<t.ImportDeclaration>, state: PluginPass) {
         const fileName = extractFileName(state);
 
         for (const specifier of path.node.specifiers) {
@@ -214,16 +222,15 @@ function transformer() {
             case 'ImportDefaultSpecifier':
               return notImplementedYet('import default from "./blah"');
             case 'ImportSpecifier':
-              const registerImport = t.callExpression(
-                t.identifier(namespaceRegisterImport.name), [
-                t.stringLiteral(fileName),
-                t.stringLiteral(specifier.local.name),
+              namespaceRegisterImport(
+                fileName,
+                specifier.local.name,
                 specifier.imported.type === 'StringLiteral'
-                  ? specifier.imported
-                  : t.stringLiteral(specifier.imported.name),
-                path.node.source
-              ]);
-              path.replaceWith(registerImport);
+                  ? specifier.imported.value
+                  : specifier.imported.name,
+                path.node.source.value
+              )
+              path.remove();
               break;
             default: return unexpected(`Import specifier type ${(specifier as any).type}`)
           }

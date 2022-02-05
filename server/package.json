@@ -4,6 +4,7 @@
   "description": "",
   "main": "jive.js",
   "scripts": {
+    "start": "ts-node index.ts",
     "test:transform": "ts-node test/transform/index.ts",
     "test:evaluate": "ts-node test/evaluate/index.ts"
   },

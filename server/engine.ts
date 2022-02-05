@@ -37,6 +37,7 @@ const namespaceImports = new Map<Namespace, ImportsByLocal>();
 
 export function evaluate(namespace: string, code: string) {
   const codeTransformed = transform(namespace, code);
+  // console.log(`code transformed:\n${codeTransformed}`);
 
   const ns: NamespaceValuesByKey = namespaces.get(namespace) || new Map();
   const nsImports: ImportsByLocal = namespaceImports.get(namespace) || new Map();
@@ -56,6 +57,7 @@ export function evaluate(namespace: string, code: string) {
     .fromPairs()
     .value();
 
+  // console.log('all exports', namespaceExports);
   // console.log('all imports', namespaceImports);
   // console.log('ns imports for scope', nsImportsForScope);
 
@@ -125,7 +127,7 @@ function unexpected(thing) {
 
 export function transform(namespace: string, code: string) {
   const output = babel.transformSync(code, {
-    plugins: [transformer],
+    plugins: [importsRegistration, finalTransform],
     filename: namespace,
     parserOpts: {
       allowUndeclaredExports: true,
@@ -134,11 +136,15 @@ export function transform(namespace: string, code: string) {
   return output?.code;
 }
 
-function extractFileName(state) {
-  return state.file.opts.filename;
+function extractFileName(state: PluginPass) {
+  const { filename } = state.file.opts;
+  if (!filename) {
+    throw Error('No filename');
+  }
+  return filename;
 }
 
-function transformer() {
+function finalTransform() {
   return {
     visitor: {
       Program(path: NodePath<t.Program>, state: PluginPass) {
@@ -150,7 +156,21 @@ function transformer() {
             t.stringLiteral(binding.identifier.name),
             binding.identifier
           ]);
-          path.node.body.push(t.expressionStatement(registerValue));
+          const parent = binding.path.parentPath;
+          if (!parent) continue;
+          // For variable declarations, the parent is "VariableDeclaration".
+          // If we insert after the path (not the parent), we get something like:
+          // `const x = 10, <inserted here>` which we don't want.
+          // Instead we want something like:
+          // ```
+          // const x = 10;
+          // <inserted here>
+          // ```
+          if (parent.type !== 'Program') {
+            parent.insertAfter(registerValue);
+          } else {
+            binding.path.insertAfter(registerValue);
+          }
         }
       },
       ExpressionStatement(path: NodePath<t.ExpressionStatement>, state: PluginPass) {
@@ -186,11 +206,6 @@ function transformer() {
           return;
         }
 
-        // E.g. `export const x = 1` => `const x = 1`
-        if (path.node.declaration) {
-          path.replaceWith(path.node.declaration);
-        }
-
         for (const [, binding] of Object.entries(path.scope.getProgramParent().bindings)) {
           const registerExport = t.callExpression(
             t.identifier(namespaceRegisterExport.name), [
@@ -198,7 +213,14 @@ function transformer() {
             t.stringLiteral(binding.identifier.name),
             t.stringLiteral(binding.identifier.name)
           ]);
-          path.insertAfter(registerExport);
+          if (binding.path.parentPath?.isExportDeclaration()) {
+            binding.path.parentPath?.insertAfter(registerExport);
+          }
+        }
+
+        // E.g. `export const x = 1` => `const x = 1`
+        if (path.node.declaration) {
+          path.replaceWith(path.node.declaration);
         }
       },
       // ExportDefaultDeclaration(path: NodePath<t.ExportDefaultDeclaration>, state) {
@@ -212,6 +234,17 @@ function transformer() {
       //   path.replaceWith(path.node.declaration);
       //   path.insertAfter(registerDefaultExport);
       // }
+      ImportDeclaration(path: NodePath<t.ImportDeclaration>, state: PluginPass) {
+        // Imports should've been taken care of by `transformerImports`
+        path.remove();
+      }
+    }
+  }
+}
+
+function importsRegistration() {
+  return {
+    visitor: {
       ImportDeclaration(path: NodePath<t.ImportDeclaration>, state: PluginPass) {
         const fileName = extractFileName(state);
 
@@ -230,7 +263,6 @@ function transformer() {
                   : specifier.imported.name,
                 path.node.source.value
               )
-              path.remove();
               break;
             default: return unexpected(`Import specifier type ${(specifier as any).type}`)
           }

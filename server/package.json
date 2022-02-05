@@ -17,7 +17,8 @@
     "capture-console": "^1.0.1",
     "express": "^4.17.2",
     "lodash": "^4.17.21",
-    "strip-color": "^0.1.0"
+    "strip-color": "^0.1.0",
+    "typescript": "^4.5.5"
   },
   "devDependencies": {
     "@types/babel__core": "^7.1.18",

@@ -68,18 +68,18 @@ export function evaluate(namespace: string, code: string, debug?: boolean) {
   }
 
   return eval(`
-  with (nsImportsForScope) {
-    with (nsForScope) {
-      (function () {
-        "use strict";
-        try {
-          ${codeTransformed}
-        } catch (e) {
-          console.error(e);
-        }
-      })();
-    }
-  }`);
+with (nsImportsForScope) {
+with (nsForScope) {
+(function () {
+"use strict";
+try {
+${codeTransformed}
+} catch (e) {
+console.error(e);
+}
+})();
+}
+}`);
 }
 
 function namespaceRegisterValue(namespace: string, key: string, value: any) {
@@ -133,7 +133,7 @@ function unexpected(thing) {
 
 export function transform(namespace: string, code: string) {
   const output = babel.transformSync(code, {
-    plugins: [importsRegistration, finalTransform],
+    plugins: [transformer],
     filename: namespace,
     parserOpts: {
       allowUndeclaredExports: true,
@@ -150,7 +150,7 @@ function extractFileName(state: PluginPass) {
   return filename;
 }
 
-function finalTransform() {
+function transformer() {
   return {
     visitor: {
       Program(path: NodePath<t.Program>, state: PluginPass) {
@@ -158,10 +158,10 @@ function finalTransform() {
         for (const [, binding] of Object.entries(path.scope.bindings)) {
           const registerValue = t.callExpression(
             t.identifier(namespaceRegisterValue.name), [
-            t.stringLiteral(fileName),
-            t.stringLiteral(binding.identifier.name),
-            binding.identifier
-          ]);
+              t.stringLiteral(fileName),
+              t.stringLiteral(binding.identifier.name),
+              binding.identifier
+            ]);
           const parent = binding.path.parentPath;
           if (!parent) continue;
           // For variable declarations, the parent is "VariableDeclaration".
@@ -202,10 +202,10 @@ function finalTransform() {
 
             const registerExport = t.callExpression(
               t.identifier(namespaceRegisterExport.name), [
-              t.stringLiteral(fileName),
-              t.stringLiteral(specifier.local.name),
-              specifier.exported.type === 'StringLiteral' ? specifier.exported : t.stringLiteral(specifier.exported.name),
-            ]);
+                t.stringLiteral(fileName),
+                t.stringLiteral(specifier.local.name),
+                specifier.exported.type === 'StringLiteral' ? specifier.exported : t.stringLiteral(specifier.exported.name),
+              ]);
             path.insertAfter(registerExport);
           }
           path.remove();
@@ -217,10 +217,10 @@ function finalTransform() {
         for (const [, binding] of Object.entries(path.scope.bindings)) {
           const registerExport = t.callExpression(
             t.identifier(namespaceRegisterExport.name), [
-            t.stringLiteral(fileName),
-            t.stringLiteral(binding.identifier.name),
-            t.stringLiteral(binding.identifier.name)
-          ]);
+              t.stringLiteral(fileName),
+              t.stringLiteral(binding.identifier.name),
+              t.stringLiteral(binding.identifier.name)
+            ]);
           const { path } = binding;
           const isExportedVar = ancestors(path, [
             'VariableDeclarator',
@@ -241,49 +241,60 @@ function finalTransform() {
           path.replaceWith(path.node.declaration);
         }
       },
-      // ExportDefaultDeclaration(path: NodePath<t.ExportDefaultDeclaration>, state) {
-      //   const fileName = extractFileName(state);
-      //   const registerDefaultExport = t.callExpression(
-      //     t.identifier(namespaceRegisterDefaultExport.name), [
-      //     t.stringLiteral(fileName),
-      //     t.identifier('defaultExportSym'),
-      //     path.node.declaration
-      //   ]);
-      //   path.replaceWith(path.node.declaration);
-      //   path.insertAfter(registerDefaultExport);
-      // }
-      ImportDeclaration(path: NodePath<t.ImportDeclaration>, state: PluginPass) {
-        // Imports should've been taken care of by `transformerImports`
-        path.remove();
-      }
-    }
-  }
-}
-
-function importsRegistration() {
-  return {
-    visitor: {
-      ImportDeclaration(path: NodePath<t.ImportDeclaration>, state: PluginPass) {
+      ExportDefaultDeclaration(path: NodePath<t.ExportDefaultDeclaration>, state) {
         const fileName = extractFileName(state);
 
-        for (const specifier of path.node.specifiers) {
-          switch (specifier.type) {
-            case 'ImportNamespaceSpecifier':
-              return notImplementedYet('import * as ns from "./blah"');
-            case 'ImportDefaultSpecifier':
-              return notImplementedYet('import default from "./blah"');
-            case 'ImportSpecifier':
-              namespaceRegisterImport(
-                fileName,
-                specifier.local.name,
-                specifier.imported.type === 'StringLiteral'
-                  ? specifier.imported.value
-                  : specifier.imported.name,
-                path.node.source.value
-              )
-              break;
-            default: return unexpected(`Import specifier type ${(specifier as any).type}`)
+        let local: t.Identifier;
+        const { declaration } = path.node;
+        if (t.isClassDeclaration(declaration) || t.isFunctionDeclaration(declaration)) {
+          local = declaration.id!;
+        } else if (t.isIdentifier(declaration)) {
+          local = declaration;
+        } else {
+          return unexpected(`Default export: ${declaration.type}`);
+        }
+
+        const registerDefaultExport = t.callExpression(
+          t.identifier(namespaceRegisterDefaultExport.name), [
+            t.stringLiteral(fileName),
+            t.stringLiteral(local.name)
+          ]);
+        path.replaceWith(path.node.declaration);
+        path.insertAfter(registerDefaultExport);
+      },
+      ImportDeclaration: {
+        enter: (path: NodePath<t.ImportDeclaration>, state: PluginPass) => {
+          const fileName = extractFileName(state);
+
+          for (const specifier of path.node.specifiers) {
+            switch (specifier.type) {
+              case 'ImportNamespaceSpecifier':
+                return notImplementedYet('import * as ns from "./blah"');
+              case 'ImportDefaultSpecifier':
+                namespaceRegisterImport(
+                  fileName,
+                  specifier.local.name,
+                  symbols['default'],
+                  path.node.source.value
+                );
+                break;
+              case 'ImportSpecifier':
+                namespaceRegisterImport(
+                  fileName,
+                  specifier.local.name,
+                  specifier.imported.type === 'StringLiteral'
+                    ? specifier.imported.value
+                    : specifier.imported.name,
+                  path.node.source.value
+                );
+                break;
+              default:
+                return unexpected(`Import specifier type ${(specifier as any).type}`)
+            }
           }
+        },
+        exit: (path: NodePath<t.ImportDeclaration>, state: PluginPass) => {
+          path.remove();
         }
       }
     }

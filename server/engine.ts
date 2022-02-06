@@ -35,9 +35,13 @@ interface Import {
 type ImportsByLocal = Map<Import['local'], Import>;
 const namespaceImports = new Map<Namespace, ImportsByLocal>();
 
-export function evaluate(namespace: string, code: string) {
+export function evaluate(namespace: string, code: string, debug?: boolean) {
   const codeTransformed = transform(namespace, code);
-  // console.log(`code transformed:\n${codeTransformed}`);
+
+  if (debug) {
+    console.log(`code transformed:\n${codeTransformed}`);
+    console.log();
+  }
 
   const ns: NamespaceValuesByKey = namespaces.get(namespace) || new Map();
   const nsImports: ImportsByLocal = namespaceImports.get(namespace) || new Map();
@@ -57,9 +61,11 @@ export function evaluate(namespace: string, code: string) {
     .fromPairs()
     .value();
 
-  // console.log('all exports', namespaceExports);
-  // console.log('all imports', namespaceImports);
-  // console.log('ns imports for scope', nsImportsForScope);
+  if (debug) {
+    // console.log('all exports', namespaceExports);
+    // console.log('all imports', namespaceImports);
+    // console.log('ns imports for scope', nsImportsForScope);
+  }
 
   return eval(`
   with (nsImportsForScope) {
@@ -206,14 +212,26 @@ function finalTransform() {
           return;
         }
 
-        for (const [, binding] of Object.entries(path.scope.getProgramParent().bindings)) {
+        // FIXME: This runs N! times for N exported bindings. Need to implement some sort of
+        // memoization
+        for (const [, binding] of Object.entries(path.scope.bindings)) {
           const registerExport = t.callExpression(
             t.identifier(namespaceRegisterExport.name), [
             t.stringLiteral(fileName),
             t.stringLiteral(binding.identifier.name),
             t.stringLiteral(binding.identifier.name)
           ]);
-          if (binding.path.parentPath?.isExportDeclaration()) {
+          const { path } = binding;
+          const isExportedVar = ancestors(path, [
+            'VariableDeclarator',
+            'VariableDeclaration',
+            'ExportNamedDeclaration'
+          ]);
+          const isExportedFn = ancestors(path, [
+            'FunctionDeclaration',
+            'ExportNamedDeclaration'
+          ])
+          if (isExportedVar || isExportedFn) {
             binding.path.parentPath?.insertAfter(registerExport);
           }
         }
@@ -270,4 +288,15 @@ function importsRegistration() {
       }
     }
   }
+}
+
+function ancestors(node: any, types: babel.Node['type'][]) {
+  let isSatisfied = true;
+  for (const t of types) {
+    if (node.type !== t) {
+      return false;
+    }
+    node = node.parentPath;
+  }
+  return isSatisfied;
 }

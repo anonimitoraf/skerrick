@@ -2,10 +2,14 @@ import path from 'path'
 import fs from 'fs'
 import { evaluate } from '../../engine'
 
-const dirs = [
-  // 'basic',
-  'exports-and-imports'
-]
+const isScratch = process.argv[2] === 'scratch';
+
+const dirs = isScratch
+  ? ['scratchpad']
+  : [
+    // 'basic',
+    'exports-and-imports'
+  ]
 
 for (const dir of dirs) {
   const delimiter = "// ---";
@@ -23,13 +27,12 @@ for (const dir of dirs) {
       .map(code => {
         try {
           // `/` to force the filename to be treated as absolute
-          return evaluate('/' + path.basename(inputPath), code);
+          return evaluate('/' + path.basename(inputPath), code, isScratch);
         } catch (e) {
           return e.stack || e.message;
         }
       })
       .join('\n' + delimiter + '\n');
-    console.log('output', output)
     fs.writeFileSync(outputPath, output);
   }
 }

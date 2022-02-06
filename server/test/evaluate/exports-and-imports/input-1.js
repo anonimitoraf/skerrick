@@ -17,3 +17,8 @@ function h (x) {
   return g(x) + x;
 }
 export { h };
+// ---
+export const x = 1.5;
+const y = 2;
+export { x as x1, y };
+// ---

@@ -12,3 +12,20 @@ g2(30);
 // ---
 import { h } from '/input-1.js'
 h(100);
+// ---
+import { x, x1, y } from '/input-1.js'
+// ---
+x
+// ---
+x1
+// ---
+y
+// ---
+f(x);
+// ---
+f(x1);
+// ---
+f(y);
+// ---
+// import defaultFn from '/input-1.js';
+// defaultFn.f(2);

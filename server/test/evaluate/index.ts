@@ -7,8 +7,9 @@ const isScratch = process.argv[2] === 'scratch';
 const dirs = isScratch
   ? ['scratchpad']
   : [
-    // 'basic',
-    'exports-and-imports'
+    'basic',
+    'exports-and-imports',
+    'default-exports-and-imports'
   ]
 
 for (const dir of dirs) {

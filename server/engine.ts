@@ -6,7 +6,8 @@ import { NodePath } from '@babel/traverse';
 import { PluginPass } from '@babel/core';
 
 const symbols = {
-  "default": Symbol('*defaultExport*')
+  defaultExport: Symbol('defaultExport'),
+  namespaceExport: Symbol('namespaceExport')
 }
 
 type Namespace = string;
@@ -35,6 +36,13 @@ interface Import {
 type ImportsByLocal = Map<Import['local'], Import>;
 const valueImports = new Map<Namespace, ImportsByLocal>();
 
+interface NamespaceImport {
+  importedNamespace: Namespace
+  local: string;
+}
+type NamespaceImportsByLocal = Map<NamespaceImport['local'], NamespaceImport>;
+const namespaceImports = new Map<Namespace, NamespaceImportsByLocal>();
+
 export function evaluate(namespace: string, code: string, debug?: boolean) {
   const codeTransformed = transform(namespace, code);
 
@@ -48,10 +56,14 @@ export function evaluate(namespace: string, code: string, debug?: boolean) {
 
   const nsImportsForScope = _([...nsImports.entries()])
     .map(([local, { importedNamespace, imported }]) => {
-      const nsExports = valueExports.get(importedNamespace);
-      const exported = nsExports?.get(imported);
-      const exportedValue = exported && namespaces.get(importedNamespace)?.get(exported.local);
-      return [local, exportedValue];
+      if (imported === symbols.namespaceExport) {
+        return [local, constructNamespaceExport(importedNamespace)];
+      } else {
+        const nsExports = valueExports.get(importedNamespace);
+        const exported = nsExports?.get(imported);
+        const exportedValue = exported && namespaces.get(importedNamespace)?.get(exported.local);
+        return [local, exportedValue];
+      }
     })
     .fromPairs()
     .value();
@@ -82,10 +94,21 @@ export function evaluate(namespace: string, code: string, debug?: boolean) {
     }`);
 }
 
+function constructNamespaceExport(namespace: string) {
+  const values: NamespaceValuesByKey = namespaces.get(namespace) || new Map();
+  const exports: ExportsByExported = valueExports.get(namespace) || new Map();
+  const nsExport = _([...values.entries()])
+    .map(([k, v]) => exports.get(k) && [k, v])
+    .filter(x => !!x)
+    .fromPairs()
+    .value();
+  return nsExport;
+}
+
 function registerValue(namespace: string, key: string, value: any) {
-  const nsValues: NamespaceValuesByKey = namespaces.get(namespace) || new Map();
-  namespaces.set(namespace, nsValues);
-  nsValues.set(key, value);
+  const values: NamespaceValuesByKey = namespaces.get(namespace) || new Map();
+  namespaces.set(namespace, values);
+  values.set(key, value);
   return value;
 }
 
@@ -104,22 +127,22 @@ function registerDefaultValueExport(
   namespace: string,
   local: Export['local']
 ) {
-  const nsExports: ExportsByExported = valueExports.get(namespace) || new Map();
-  valueExports.set(namespace, nsExports);
-  nsExports.set(symbols["default"], { exported: symbols["default"], local });
+  const exports: ExportsByExported = valueExports.get(namespace) || new Map();
+  valueExports.set(namespace, exports);
+  exports.set(symbols["default"], { exported: symbols["default"], local });
   return symbols["default"].toString();
 }
 
 function registerValueImport(
-  namespace: string,
+  importingNamespace: string,
   local: Import['local'],
   imported: Import['imported'],
   importedNamespace: string
 ) {
-  const absoluteImportedNamespace = path.join(path.dirname(namespace), importedNamespace)
-  const nsImports: ImportsByLocal = valueImports.get(namespace) || new Map();
-  valueImports.set(namespace, nsImports);
-  nsImports.set(local, { imported, local, importedNamespace: absoluteImportedNamespace });
+  const absoluteImportedNamespace = path.join(path.dirname(importingNamespace), importedNamespace)
+  const imports: ImportsByLocal = valueImports.get(importingNamespace) || new Map();
+  valueImports.set(importingNamespace, imports);
+  imports.set(local, { imported, local, importedNamespace: absoluteImportedNamespace });
   return local;
 }
 
@@ -261,12 +284,18 @@ function transformer() {
           for (const specifier of path.node.specifiers) {
             switch (specifier.type) {
               case 'ImportNamespaceSpecifier':
-                return notImplementedYet('import * as ns from "./blah"');
+                registerValueImport(
+                  fileName,
+                  specifier.local.name,
+                  symbols.namespaceExport,
+                  path.node.source.value
+                );
+                break;
               case 'ImportDefaultSpecifier':
                 registerValueImport(
                   fileName,
                   specifier.local.name,
-                  symbols['default'],
+                  symbols.defaultExport,
                   path.node.source.value
                 );
                 break;

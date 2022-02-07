@@ -22,7 +22,7 @@ interface Export {
   local: string;
 }
 type ExportsByExported = Map<Export['exported'], Export>;
-const namespaceExports = new Map<Namespace, ExportsByExported>();
+const valueExports = new Map<Namespace, ExportsByExported>();
 
 // Imports have an imported name and a local name (they could be the same). When constructing
 // the env's scope, we want to use the latter (if defined).
@@ -33,7 +33,7 @@ interface Import {
   local: string;
 }
 type ImportsByLocal = Map<Import['local'], Import>;
-const namespaceImports = new Map<Namespace, ImportsByLocal>();
+const valueImports = new Map<Namespace, ImportsByLocal>();
 
 export function evaluate(namespace: string, code: string, debug?: boolean) {
   const codeTransformed = transform(namespace, code);
@@ -44,11 +44,11 @@ export function evaluate(namespace: string, code: string, debug?: boolean) {
   }
 
   const ns: NamespaceValuesByKey = namespaces.get(namespace) || new Map();
-  const nsImports: ImportsByLocal = namespaceImports.get(namespace) || new Map();
+  const nsImports: ImportsByLocal = valueImports.get(namespace) || new Map();
 
   const nsImportsForScope = _([...nsImports.entries()])
     .map(([local, { importedNamespace, imported }]) => {
-      const nsExports = namespaceExports.get(importedNamespace);
+      const nsExports = valueExports.get(importedNamespace);
       const exported = nsExports?.get(imported);
       const exportedValue = exported && namespaces.get(importedNamespace)?.get(exported.local);
       return [local, exportedValue];
@@ -68,67 +68,59 @@ export function evaluate(namespace: string, code: string, debug?: boolean) {
   }
 
   return eval(`
-with (nsImportsForScope) {
-with (nsForScope) {
-(function () {
-"use strict";
-try {
-${codeTransformed}
-} catch (e) {
-console.error(e);
-}
-})();
-}
-}`);
+    with (nsImportsForScope) {
+      with (nsForScope) {
+        (function () {
+          "use strict";
+          try {
+              ${codeTransformed}
+          } catch (e) {
+            console.error(e);
+          }
+        })();
+      }
+    }`);
 }
 
-function namespaceRegisterValue(namespace: string, key: string, value: any) {
+function registerValue(namespace: string, key: string, value: any) {
   const nsValues: NamespaceValuesByKey = namespaces.get(namespace) || new Map();
   namespaces.set(namespace, nsValues);
   nsValues.set(key, value);
   return value;
 }
 
-function namespaceRegisterExport(
+function registerValueExport(
   namespace: string,
   local: Export['local'],
   exported: Export['exported']
 ) {
-  const nsExports: ExportsByExported = namespaceExports.get(namespace) || new Map();
-  namespaceExports.set(namespace, nsExports);
+  const nsExports: ExportsByExported = valueExports.get(namespace) || new Map();
+  valueExports.set(namespace, nsExports);
   nsExports.set(exported, { exported, local });
   return exported;
 }
 
-function namespaceRegisterDefaultExport(
+function registerDefaultValueExport(
   namespace: string,
   local: Export['local']
 ) {
-  const nsExports: ExportsByExported = namespaceExports.get(namespace) || new Map();
-  namespaceExports.set(namespace, nsExports);
+  const nsExports: ExportsByExported = valueExports.get(namespace) || new Map();
+  valueExports.set(namespace, nsExports);
   nsExports.set(symbols["default"], { exported: symbols["default"], local });
   return symbols["default"].toString();
 }
 
-function namespaceRegisterImport(
+function registerValueImport(
   namespace: string,
   local: Import['local'],
   imported: Import['imported'],
   importedNamespace: string
 ) {
   const absoluteImportedNamespace = path.join(path.dirname(namespace), importedNamespace)
-  const nsImports: ImportsByLocal = namespaceImports.get(namespace) || new Map();
-  namespaceImports.set(namespace, nsImports);
+  const nsImports: ImportsByLocal = valueImports.get(namespace) || new Map();
+  valueImports.set(namespace, nsImports);
   nsImports.set(local, { imported, local, importedNamespace: absoluteImportedNamespace });
   return local;
-}
-
-function notImplementedYet(feature) {
-  throw Error('Sorry not implemented yet: ' + feature);
-}
-
-function unexpected(thing) {
-  throw Error('Unexpected: ' + thing);
 }
 
 export function transform(namespace: string, code: string) {
@@ -156,8 +148,8 @@ function transformer() {
       Program(path: NodePath<t.Program>, state: PluginPass) {
         const fileName = extractFileName(state);
         for (const [, binding] of Object.entries(path.scope.bindings)) {
-          const registerValue = t.callExpression(
-            t.identifier(namespaceRegisterValue.name), [
+          const registerValueExpr = t.callExpression(
+            t.identifier(registerValue.name), [
               t.stringLiteral(fileName),
               t.stringLiteral(binding.identifier.name),
               binding.identifier
@@ -173,9 +165,9 @@ function transformer() {
           // <inserted here>
           // ```
           if (parent.type !== 'Program') {
-            parent.insertAfter(registerValue);
+            parent.insertAfter(registerValueExpr);
           } else {
-            binding.path.insertAfter(registerValue);
+            binding.path.insertAfter(registerValueExpr);
           }
         }
       },
@@ -200,13 +192,13 @@ function transformer() {
           for (const specifier of (path.node.specifiers || [])) {
             if (specifier.type !== 'ExportSpecifier') continue;
 
-            const registerExport = t.callExpression(
-              t.identifier(namespaceRegisterExport.name), [
+            const registerExportExpr = t.callExpression(
+              t.identifier(registerValueExport.name), [
                 t.stringLiteral(fileName),
                 t.stringLiteral(specifier.local.name),
                 specifier.exported.type === 'StringLiteral' ? specifier.exported : t.stringLiteral(specifier.exported.name),
               ]);
-            path.insertAfter(registerExport);
+            path.insertAfter(registerExportExpr);
           }
           path.remove();
           return;
@@ -215,8 +207,8 @@ function transformer() {
         // FIXME: This runs N! times for N exported bindings. Need to implement some sort of
         // memoization
         for (const [, binding] of Object.entries(path.scope.bindings)) {
-          const registerExport = t.callExpression(
-            t.identifier(namespaceRegisterExport.name), [
+          const registerExportExpr = t.callExpression(
+            t.identifier(registerValueExport.name), [
               t.stringLiteral(fileName),
               t.stringLiteral(binding.identifier.name),
               t.stringLiteral(binding.identifier.name)
@@ -232,7 +224,7 @@ function transformer() {
             'ExportNamedDeclaration'
           ])
           if (isExportedVar || isExportedFn) {
-            binding.path.parentPath?.insertAfter(registerExport);
+            binding.path.parentPath?.insertAfter(registerExportExpr);
           }
         }
 
@@ -241,7 +233,7 @@ function transformer() {
           path.replaceWith(path.node.declaration);
         }
       },
-      ExportDefaultDeclaration(path: NodePath<t.ExportDefaultDeclaration>, state) {
+      ExportDefaultDeclaration(path: NodePath<t.ExportDefaultDeclaration>, state: PluginPass) {
         const fileName = extractFileName(state);
 
         let local: t.Identifier;
@@ -254,13 +246,13 @@ function transformer() {
           return unexpected(`Default export: ${declaration.type}`);
         }
 
-        const registerDefaultExport = t.callExpression(
-          t.identifier(namespaceRegisterDefaultExport.name), [
+        const registerDefaultExportExpr = t.callExpression(
+          t.identifier(registerDefaultValueExport.name), [
             t.stringLiteral(fileName),
             t.stringLiteral(local.name)
           ]);
         path.replaceWith(path.node.declaration);
-        path.insertAfter(registerDefaultExport);
+        path.insertAfter(registerDefaultExportExpr);
       },
       ImportDeclaration: {
         enter: (path: NodePath<t.ImportDeclaration>, state: PluginPass) => {
@@ -271,7 +263,7 @@ function transformer() {
               case 'ImportNamespaceSpecifier':
                 return notImplementedYet('import * as ns from "./blah"');
               case 'ImportDefaultSpecifier':
-                namespaceRegisterImport(
+                registerValueImport(
                   fileName,
                   specifier.local.name,
                   symbols['default'],
@@ -279,7 +271,7 @@ function transformer() {
                 );
                 break;
               case 'ImportSpecifier':
-                namespaceRegisterImport(
+                registerValueImport(
                   fileName,
                   specifier.local.name,
                   specifier.imported.type === 'StringLiteral'
@@ -310,4 +302,12 @@ function ancestors(node: any, types: babel.Node['type'][]) {
     node = node.parentPath;
   }
   return isSatisfied;
+}
+
+function notImplementedYet(feature) {
+  throw Error('Sorry not implemented yet: ' + feature);
+}
+
+function unexpected(thing) {
+  throw Error('Unexpected: ' + thing);
 }

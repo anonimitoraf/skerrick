@@ -5,6 +5,7 @@
 * TODOs
 ** [X] Fix exports: bindings being repeated N! times
 CLOSED: [2022-02-09 Wed 09:07]
-** [ ] Implment importing for side-effects (e.g. =import from '/blah'=)
+** [ ] Implement importing for side-effects (e.g. =import from '/blah'=)
+** [ ] Support dynamic imports
 * Document caveats
 - Normal execution: error when undefined identifier vs JIVE: No error

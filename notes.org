@@ -2,7 +2,9 @@
 
 * Test Suite
 ** [ ] Make it easy to visually map the input lines of code -> output lines
-* Bugs
-** [ ] Exports get repeated N! times
+* TODOs
+** [X] Fix exports: bindings being repeated N! times
+CLOSED: [2022-02-09 Wed 09:07]
+** [ ] Implment importing for side-effects (e.g. =import from '/blah'=)
 * Document caveats
 - Normal execution: error when undefined identifier vs JIVE: No error

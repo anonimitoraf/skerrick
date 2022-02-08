@@ -1,48 +1,60 @@
 const x = 1;
-namespaceRegisterExport("/input.js", "x", x)
-return namespaceRegisterValue("/input.js", "x", x);
+registerValueExport("/input.js", "x", "x");
+return registerValue("/input.js", "x", x);
 // ---
 function f(x) {
   return x;
 }
 
-namespaceRegisterExport("/input.js", "f", f)
-return namespaceRegisterValue("/input.js", "f", f);
+registerValueExport("/input.js", "f", "f")
+registerValue("/input.js", "f", f)
 // ---
 const x = 1;
-namespaceRegisterExport("/input.js", "x", x)
-return namespaceRegisterValue("/input.js", "x", x);
+registerValue("/input.js", "x", x)
+registerValueExport("/input.js", "x", "x")
 // ---
 const x = 1;
+registerValue("/input.js", "x", x)
 const y = 2;
-namespaceRegisterExport("/input.js", "y", y)
-namespaceRegisterExport("/input.js", "x", x)
-namespaceRegisterValue("/input.js", "x", x);
-return namespaceRegisterValue("/input.js", "y", y);
+registerValue("/input.js", "y", y)
+registerValueExport("/input.js", "y", "y")
+registerValueExport("/input.js", "x", "x")
 // ---
 const x = 1;
+registerValue("/input.js", "x", x)
 const y = 2;
-namespaceRegisterExport("/input.js", "y1", y)
-namespaceRegisterExport("/input.js", "x1", x)
-namespaceRegisterValue("/input.js", "x", x);
-return namespaceRegisterValue("/input.js", "y", y);
+registerValue("/input.js", "y", y)
+registerValueExport("/input.js", "y", "y1")
+registerValueExport("/input.js", "x", "x1")
 // ---
 const x = 1;
+registerValue("/input.js", "x", x)
 const y = 2;
-namespaceRegisterExport("/input.js", "y", y)
-namespaceRegisterExport("/input.js", "x1", x)
-namespaceRegisterValue("/input.js", "x", x);
-return namespaceRegisterValue("/input.js", "y", y);
+registerValue("/input.js", "y", y)
+registerValueExport("/input.js", "y", "y")
+registerValueExport("/input.js", "x", "x1")
 // ---
 const x = 1;
-namespaceRegisterExport("/input.js", "y", y)
-namespaceRegisterExport("/input.js", "x1", x)
-return namespaceRegisterValue("/input.js", "x", x);
+registerValue("/input.js", "x", x)
+registerValueExport("/input.js", "y", "y")
+registerValueExport("/input.js", "x", "x1")
 // ---
-namespaceRegisterExport("/input.js", "y", y)
-namespaceRegisterExport("/input.js", "x1", x)
+registerValueExport("/input.js", "y", "y")
+registerValueExport("/input.js", "x", "x1")
+registerValueExport("/input.js", "a", "a")
+registerValueExport("/input.js", "b", "b")
 // ---
-// TODO Default exports
 const x = 1;
-export default x;
-return namespaceRegisterValue("/input.js", "x", x);
+registerValue("/input.js", "x", x)
+x;
+registerDefaultValueExport("/input.js", "x")
+// ---
+const a = 1;
+registerValueExport("/input.js", "a", "a");
+registerValue("/input.js", "a", a);
+const b = 1;
+registerValueExport("/input.js", "b", "b");
+registerValue("/input.js", "b", b);
+const c = 1;
+registerValueExport("/input.js", "c", "c");
+return registerValue("/input.js", "c", c);

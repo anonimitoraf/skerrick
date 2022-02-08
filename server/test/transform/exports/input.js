@@ -21,7 +21,12 @@ const x = 1;
 export { x as x1, y };
 // ---
 export { x as x1, y };
+export { a };
+export { b };
 // ---
-// TODO Default exports
 const x = 1;
 export default x;
+// ---
+export const a = 1;
+export const b = 1;
+export const c = 1;

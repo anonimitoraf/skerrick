@@ -1,1 +1,1 @@
-import { f } from '/somewhere'
+import { f, g, h } from '/somewhere'

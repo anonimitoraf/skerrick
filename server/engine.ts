@@ -2,12 +2,12 @@ import _ from 'lodash';
 import path from 'path';
 import * as babel from '@babel/core';
 import * as t from '@babel/types';
-import { NodePath } from '@babel/traverse';
+import { Binding, NodePath, Scope } from '@babel/traverse';
 import { PluginPass } from '@babel/core';
 
 const symbols = {
-  defaultExport: Symbol('defaultExport'),
-  namespaceExport: Symbol('namespaceExport')
+  defaultExport: Symbol('[[defaultExport]]'),
+  namespaceExport: Symbol('[[namespaceExport]]')
 }
 
 type Namespace = string;
@@ -129,8 +129,8 @@ function registerDefaultValueExport(
 ) {
   const exports: ExportsByExported = valueExports.get(namespace) || new Map();
   valueExports.set(namespace, exports);
-  exports.set(symbols["default"], { exported: symbols["default"], local });
-  return symbols["default"].toString();
+  exports.set(symbols.defaultExport, { exported: symbols.defaultExport, local });
+  return symbols.defaultExport.toString();
 }
 
 function registerValueImport(
@@ -227,9 +227,21 @@ function transformer() {
           return;
         }
 
-        // FIXME: This runs N! times for N exported bindings. Need to implement some sort of
-        // memoization
-        for (const [, binding] of Object.entries(path.scope.bindings)) {
+        const processedBindingsByScope: Map<Scope, Set<Binding>> = state['processedBindingsByScope'] as any || new Map();
+        state['processedBindingsByScope'] = processedBindingsByScope;
+
+        const scope = path.scope;
+        for (const [bindingKey, binding] of Object.entries(scope.bindings)) {
+
+          const processedBindings = processedBindingsByScope.get(scope) || new Set();
+          processedBindingsByScope.set(scope, processedBindings);
+          if (processedBindings.has(binding)) {
+            // console.log(`Processed binding ${bindingKey} previously. Ignoring...`);
+            continue;
+          } else {
+            processedBindings.add(binding);
+          }
+
           const registerExportExpr = t.callExpression(
             t.identifier(registerValueExport.name), [
               t.stringLiteral(fileName),
@@ -237,12 +249,12 @@ function transformer() {
               t.stringLiteral(binding.identifier.name)
             ]);
           const { path } = binding;
-          const isExportedVar = ancestors(path, [
+          const isExportedVar = ancestorsAre(path, [
             'VariableDeclarator',
             'VariableDeclaration',
             'ExportNamedDeclaration'
           ]);
-          const isExportedFn = ancestors(path, [
+          const isExportedFn = ancestorsAre(path, [
             'FunctionDeclaration',
             'ExportNamedDeclaration'
           ])
@@ -250,7 +262,6 @@ function transformer() {
             binding.path.parentPath?.insertAfter(registerExportExpr);
           }
         }
-
         // E.g. `export const x = 1` => `const x = 1`
         if (path.node.declaration) {
           path.replaceWith(path.node.declaration);
@@ -280,6 +291,10 @@ function transformer() {
       ImportDeclaration: {
         enter: (path: NodePath<t.ImportDeclaration>, state: PluginPass) => {
           const fileName = extractFileName(state);
+
+          if (path.node.specifiers.length <= 0) {
+            // TODO Importing for side-effects
+          }
 
           for (const specifier of path.node.specifiers) {
             switch (specifier.type) {
@@ -322,7 +337,7 @@ function transformer() {
   }
 }
 
-function ancestors(node: any, types: babel.Node['type'][]) {
+function ancestorsAre(node: any, types: babel.Node['type'][]) {
   let isSatisfied = true;
   for (const t of types) {
     if (node.type !== t) {

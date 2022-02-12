@@ -1,6 +1,9 @@
 import path from 'path'
 import fs from 'fs'
 import { evaluate } from '../../engine'
+import { serve } from '../..';
+
+const stopServer = serve();
 
 const isScratch = process.argv[2] === 'scratch';
 
@@ -37,3 +40,5 @@ for (const dir of dirs) {
     fs.writeFileSync(outputPath, output);
   }
 }
+
+stopServer();

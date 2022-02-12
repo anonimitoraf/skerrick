@@ -1,6 +1,9 @@
 import path from 'path'
 import fs from 'fs'
 import { transform } from '../../engine'
+import { serve } from '../..';
+
+const stopServer = serve();
 
 const dirs = [
   'basic',
@@ -25,3 +28,5 @@ for (const dir of dirs) {
     .join('\n' + delimiter + '\n');
   fs.writeFileSync(outputPath, output);
 }
+
+stopServer();

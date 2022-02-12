@@ -10,14 +10,14 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:jive.helloWorld"
+    "onCommand:jive.evalSelected"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "jive.helloWorld",
-        "title": "Hello World"
+        "command": "jive.evalSelected",
+        "title": "JIVE: Evaluate selected code"
       }
     ]
   },

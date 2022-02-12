@@ -8,6 +8,7 @@ interface EvalResult {
   stderr: string;
 }
 
+// TODO Make this configurable
 const serverURL = 'http://localhost:4321';
 const http = axios.create({ baseURL: serverURL });
 
@@ -25,16 +26,18 @@ const overlayType = vscode.window.createTextEditorDecorationType({
 export function activate(context: vscode.ExtensionContext) {
   console.log('JIVE activated');
 
+  // Hide overlays on keyboard movement otherwise, the overlay moves too
   vscode.window.onDidChangeTextEditorSelection(event => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) return; // No open text editor
+    // (Vim uses "Command events")
     if (event.kind === TextEditorSelectionChangeKind.Command
       || event.kind === TextEditorSelectionChangeKind.Keyboard) {
       hideOverlays(editor);
     }
   })
 
-  const command = vscode.commands.registerCommand('jive.helloWorld', async () => {
+  const command = vscode.commands.registerCommand('jive.evalSelected', async () => {
     try {
       await evalCode()
     } catch (e) {
@@ -60,6 +63,7 @@ async function evalCode () {
 
   if (stdout) outputChannel.appendLine(`[STDOUT] ${stdout}`);
   if (stderr) outputChannel.appendLine(`[STDERR] ${stderr}`);
+  outputChannel.show(true);
 
   if (!evalOverlay) {
     evalOverlay = makeOverlay(selection, overlayText);

@@ -24,9 +24,12 @@ server.post('/eval', (req, res) => {
     return res.status(500).send(`Only absolute paths allowed! Got ${modulePath} instead`);
   }
 
-  const result = evaluate(modulePath, code);
-
-  res.status(200).send({ result, stdout, stderr });
+  try {
+    const result = evaluate(modulePath, code);
+    res.status(200).send({ result, stdout, stderr });
+  } catch (e) {
+    res.status(200).send({ stderr: removeEscapeCodes(e.stack || e.message) });
+  }
 
   // Clean up for the next request
   stdout = '';
@@ -44,3 +47,8 @@ server.listen(serverPort, () => {
     stderr = stripColor(v);
   });
 });
+
+const escapeCodeRe = /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g;
+function removeEscapeCodes(s: string | undefined) {
+  return s?.replace(escapeCodeRe, '');
+}

@@ -1,10 +1,10 @@
 {
-  "name": "jive",
-  "version": "0.0.0",
+  "name": "skerrick",
+  "version": "0.0.1",
   "description": "",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anonimitoraf/jive.git"
+    "url": "https://github.com/anonimitoraf/skerrick.git"
   },
   "main": "dist/index.js",
   "scripts": {

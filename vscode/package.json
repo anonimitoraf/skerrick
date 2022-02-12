@@ -1,6 +1,6 @@
 {
-  "name": "jive",
-  "displayName": "jive",
+  "name": "skerrick",
+  "displayName": "skerrick",
   "description": "REPL-driven development for Javascript",
   "version": "0.0.1",
   "engines": {
@@ -10,14 +10,14 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:jive.evalSelected"
+    "onCommand:skerrick.evalSelected"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "jive.evalSelected",
-        "title": "JIVE: Evaluate selected code"
+        "command": "skerrick.evalSelected",
+        "title": "SKERRICK: Evaluate selected code"
       }
     ]
   },

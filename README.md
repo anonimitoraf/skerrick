@@ -1,13 +1,15 @@
-# JIVE
-**J**avascript **I**nteractive de**V**elopment **E**nvironment (I could've gone for JIDE but doesn't sound as nice and is also not an actual word ;))
+# Skerrik
 
-REPL-driven development for NodeJS in Emacs.
+REPL-driven development for Javascript.
+
+TODO Installation instructions
+Currently supported editors:
+* VSCode
+* Emacs
 
 Inspired by (check them out!):
 * SLIME: The Superior Lisp Interaction Mode for Emacs
 * CIDER: The Clojure(Script) Interactive Development Environment that Rocks!
-
-WORK IN-PROGRESS
 
 ## Demos
 * TODO
@@ -16,10 +18,10 @@ WORK IN-PROGRESS
 * TODO
 
 ## Configuration
-* `jive-result-overlay-face` - Face used to display evaluation results
+* `skerrick-result-overlay-face` - Face used to display evaluation results
 
 ## Bugs
-* Requires and exports happen in the context of `jive/server/index.ts`. It should instead happen on the context of the passed in modulePath
+* Requires and exports happen in the context of `skerrick/server/index.ts`. It should instead happen on the context of the passed in modulePath
 
 ## Roadmap
 * Get it into MELPA

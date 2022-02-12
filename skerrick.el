@@ -1,4 +1,4 @@
-;;; jive.el --- Description -*- lexical-binding: t; -*-
+;;; skerrick.el --- Description -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2022 Rafael Nicdao
 ;;
@@ -8,7 +8,7 @@
 ;; Modified: January 01, 2022
 ;; Version: 0.0.1
 ;; Keywords: javascript js repl repl-driven
-;; Homepage: https://github.com/anonimitoraf/jive
+;; Homepage: https://github.com/anonimitoraf/skerrick
 ;; Package-Requires: ((emacs "27.1") (request "0.2.0"))
 ;;
 ;; This file is not part of GNU Emacs.
@@ -23,7 +23,7 @@
 (require 'cl-lib)
 (require 'request)
 
-(defface jive-result-overlay-face
+(defface skerrick-result-overlay-face
   '((((class color) (background light))
      :background "grey90"
      :foreground "black"
@@ -33,35 +33,35 @@
      :foreground "#ECBE7B"
      :box (:line-width -1 :color "#ECBE7B")))
   "Face used to display evaluation results at the end of line."
-  :group 'jive)
+  :group 'skerrick)
 
-(defvar jive--server-url "http://localhost:4321")
-(defvar jive--process-buffer "*jive-stdout-stderr*")
-(defvar jive--eval-overlay nil)
+(defvar skerrick--server-url "http://localhost:4321")
+(defvar skerrick--process-buffer "*skerrick-stdout-stderr*")
+(defvar skerrick--eval-overlay nil)
 
-(defun jive--propertize-error (error) (propertize error 'face '(:foreground "red")))
+(defun skerrick--propertize-error (error) (propertize error 'face '(:foreground "red")))
 
-(defun jive--display-overlay (value face)
-  (overlay-put jive--eval-overlay 'before-string
+(defun skerrick--display-overlay (value face)
+  (overlay-put skerrick--eval-overlay 'before-string
                (propertize value 'face face)))
 
-(defun jive--append-to-process-buffer (value)
-  (with-current-buffer (get-buffer-create jive--process-buffer)
+(defun skerrick--append-to-process-buffer (value)
+  (with-current-buffer (get-buffer-create skerrick--process-buffer)
     (goto-char (point-max)) ; Append to buffer
     (insert value ?\n)))
 
-(defun jive--process-server-response (response)
+(defun skerrick--process-server-response (response)
   (let* ((stdout (alist-get 'stdout response))
           (stderr (alist-get 'stderr response))
           (result (alist-get 'result response)))
-    (when stdout (jive--append-to-process-buffer stdout))
-    (when stderr (jive--append-to-process-buffer (jive--propertize-error stderr)))
-    (jive--display-overlay (format " => %s " (if result result "undefined")) 'jive-result-overlay-face)))
+    (when stdout (skerrick--append-to-process-buffer stdout))
+    (when stderr (skerrick--append-to-process-buffer (skerrick--propertize-error stderr)))
+    (skerrick--display-overlay (format " => %s " (if result result "undefined")) 'skerrick-result-overlay-face)))
 
-(defun jive--send-eval-req (code module-path)
+(defun skerrick--send-eval-req (code module-path)
   "Send CODE and MODULE-PATH to sever."
   (request
-    (concat jive--server-url "/eval")
+    (concat skerrick--server-url "/eval")
     :type "POST"
     :data (json-encode `(("code" . ,code) ("modulePath" . ,module-path)))
     :parser 'json-read
@@ -69,27 +69,27 @@
     :headers '(("Content-Type" . "application/json"))
     :success (cl-function (lambda (&key data &allow-other-keys)
                             ;; (message "DATA %s" data)
-                            (jive--process-server-response data)))))
+                            (skerrick--process-server-response data)))))
 
-(defun jive-remove-eval-overlay ()
+(defun skerrick-remove-eval-overlay ()
   (interactive)
-  (when (overlayp jive--eval-overlay) (delete-overlay jive--eval-overlay)))
+  (when (overlayp skerrick--eval-overlay) (delete-overlay skerrick--eval-overlay)))
 
-(defun jive-eval-region ()
+(defun skerrick-eval-region ()
   "Evaluate the selected JS code."
   (interactive)
   (let* ((beg (region-beginning))
          (end (region-end))
          (selected-code (format "%s" (buffer-substring-no-properties beg end))))
     ;; Clean up previous eval overlay
-    (jive-remove-eval-overlay)
+    (skerrick-remove-eval-overlay)
     (save-excursion
       (goto-char end)
       ;; Make sure the overlay is actually at the end of the evaluated region, not on a newline
       (skip-chars-backward "\r\n[:blank:]")
       ;; Seems like the END arg of make-overlay is useless. Just use the same value as BEGIN
-      (setq jive--eval-overlay (make-overlay (point) (point) (current-buffer))))
-    (jive--send-eval-req selected-code (buffer-file-name))))
+      (setq skerrick--eval-overlay (make-overlay (point) (point) (current-buffer))))
+    (skerrick--send-eval-req selected-code (buffer-file-name))))
 
 ;; (request
 ;;   "http://localhost:4321/eval"
@@ -103,5 +103,5 @@
 
 ;; temp-var
 
-(provide 'jive)
-;;; jive.el ends here
+(provide 'skerrick)
+;;; skerrick.el ends here

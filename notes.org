@@ -10,4 +10,4 @@ CLOSED: [2022-02-09 Wed 09:07]
 ** [ ] Support dynamic imports
 ** [ ] Typescript support
 * Document caveats
-- Normal execution: error when undefined identifier vs JIVE: No error
+- Normal execution: error when undefined identifier vs Skerrik: No error

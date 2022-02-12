@@ -5,7 +5,7 @@ import stripColor from 'strip-color';
 import captureConsole from 'capture-console';
 import { evaluate } from './engine';
 
-/** Instantiates a JIVE server. Returns a fn that stops the server. */
+/** Instantiates a Skerrick server. Returns a fn that stops the server. */
 export function serve(port = 4321) {
   const server = express();
 
@@ -38,7 +38,7 @@ export function serve(port = 4321) {
   })
 
   const serverInstance = server.listen(port, () => {
-    console.log(`JIVE server listening on port ${port}`);
+    console.log(`Skerrik server listening on port ${port}`);
 
     captureConsole.startCapture(process.stdout, function(v) {
       stdout = stripColor(v);

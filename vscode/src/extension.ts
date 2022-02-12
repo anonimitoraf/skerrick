@@ -8,11 +8,12 @@ interface EvalResult {
   stderr: string;
 }
 
-// TODO Make this configurable
-const serverURL = 'http://localhost:4321';
-const http = axios.create({ baseURL: serverURL });
+const http = axios.create({});
 
-const outputChannel = vscode.window.createOutputChannel('JIVE');
+const outputChannel = vscode.window.createOutputChannel('Skerrick');
+
+const config = vscode.workspace.getConfiguration('skerrick');
+const overlayTextMaxLength = config.get('resultMaxLengthBeforeTruncation') || 50;
 
 let evalOverlay: DecorationOptions | undefined = undefined;
 const overlayType = vscode.window.createTextEditorDecorationType({
@@ -24,7 +25,7 @@ const overlayType = vscode.window.createTextEditorDecorationType({
 });
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log('JIVE activated');
+  console.log('Skerrik activated');
 
   // Hide overlays on keyboard movement otherwise, the overlay moves too
   vscode.window.onDidChangeTextEditorSelection(event => {
@@ -37,7 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   })
 
-  const command = vscode.commands.registerCommand('jive.evalSelected', async () => {
+  const command = vscode.commands.registerCommand('skerrick.evalSelected', async () => {
     try {
       await evalCode()
     } catch (e) {
@@ -92,3 +93,7 @@ function hideOverlays(editor: TextEditor) {
 
 // this method is called when your extension is deactivated
 export function deactivate() { }
+
+function startServer () {
+
+}

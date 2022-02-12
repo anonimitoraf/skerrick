@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/anonimitoraf/jive.git"
   },
-  "main": "jive.js",
+  "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "start": "ts-node index.ts",

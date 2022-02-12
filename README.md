@@ -1,4 +1,4 @@
-# Skerrik
+# Skerrick
 
 > noun: **skerrick**  
 >   the smallest bit.  

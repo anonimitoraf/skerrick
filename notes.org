@@ -6,8 +6,9 @@
 ** [X] Fix exports: bindings being repeated N! times
 CLOSED: [2022-02-09 Wed 09:07]
 ** [ ] Auto-evaluation of the project (e.g. starting from =index.js=)
+** [ ] Support evaluation of node_modules
 ** [ ] Implement importing for side-effects (e.g. =import from '/blah'=)
 ** [ ] Support dynamic imports
 ** [ ] Typescript support
 * Document caveats
-- Normal execution: error when undefined identifier vs Skerrik: No error
+- Normal execution: error when undefined identifier vs Skerrick: No error

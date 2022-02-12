@@ -25,7 +25,7 @@ const overlayType = vscode.window.createTextEditorDecorationType({
 });
 
 export function activate(context: vscode.ExtensionContext) {
-  console.log('Skerrik activated');
+  console.log('Skerrick activated');
 
   // Hide overlays on keyboard movement otherwise, the overlay moves too
   vscode.window.onDidChangeTextEditorSelection(event => {

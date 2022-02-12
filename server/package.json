@@ -8,7 +8,8 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "rimraf dist && tsc",
+    "build:watch": "rimraf dist && tsc -w",
     "start": "ts-node index.ts",
     "test:transform": "ts-node test/transform/index.ts",
     "test:evaluate": "ts-node test/evaluate/index.ts",
@@ -30,6 +31,10 @@
     "@types/babel__core": "^7.1.18",
     "@types/express": "^4.17.13",
     "@types/lodash": "^4.14.178",
-    "@types/node": "^17.0.8"
+    "@types/node": "^17.0.8",
+    "rimraf": "^3.0.2"
+  },
+  "bin": {
+    "skerrick": "./dist/cli.js"
   }
 }

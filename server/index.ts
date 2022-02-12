@@ -38,7 +38,7 @@ export function serve(port = 4321) {
   })
 
   const serverInstance = server.listen(port, () => {
-    console.log(`Skerrik server listening on port ${port}`);
+    console.log(`Skerrick server listening on port ${port}`);
 
     captureConsole.startCapture(process.stdout, function(v) {
       stdout = stripColor(v);

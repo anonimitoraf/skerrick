@@ -1,45 +1,89 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { DecorationOptions, Range } from 'vscode';
+import { DecorationOptions, Range, TextEditor, TextEditorSelectionChangeKind } from 'vscode';
+import axios from 'axios';
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
-  console.log('Congratulations, your extension "jive" is now active!');
-
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with registerCommand
-  // The commandId parameter must match the command field in package.json
-  let disposable = vscode.commands.registerCommand('jive.helloWorld', evaluateCode);
-
-  context.subscriptions.push(disposable);
+interface EvalResult {
+  result: any;
+  stdout: string;
+  stderr: string;
 }
 
-function evaluateCode () {
+const serverURL = 'http://localhost:4321';
+const http = axios.create({ baseURL: serverURL });
+
+const outputChannel = vscode.window.createOutputChannel('JIVE');
+
+let evalOverlay: DecorationOptions | undefined = undefined;
+const overlayType = vscode.window.createTextEditorDecorationType({
+  after: {
+    margin: "0 0 0 0.5rem"
+  },
+  dark: { after: { border: "1px solid white" } },
+  light: { after: { border: "1px solid black" } }
+});
+
+export function activate(context: vscode.ExtensionContext) {
+  console.log('JIVE activated');
+
+  vscode.window.onDidChangeTextEditorSelection(event => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) return; // No open text editor
+    if (event.kind === TextEditorSelectionChangeKind.Command
+      || event.kind === TextEditorSelectionChangeKind.Keyboard) {
+      hideOverlays(editor);
+    }
+  })
+
+  const command = vscode.commands.registerCommand('jive.helloWorld', async () => {
+    try {
+      await evalCode()
+    } catch (e) {
+      vscode.window.showErrorMessage(`Failed to evaluate code: ${e}`);
+    }
+  });
+  context.subscriptions.push(command);
+}
+
+async function evalCode () {
   const editor = vscode.window.activeTextEditor;
   if (!editor) return; // No open text editor
 
   const { selection } = editor;
 
-  const decorationType = vscode.window.createTextEditorDecorationType({});
-  editor.setDecorations(decorationType, [makeOverlay(selection, "=> blah")]);
+  const code = editor.document.getText(selection);
+  const filePath = editor.document.fileName;
+
+  outputChannel.appendLine(`[LOG] Evaluating code: ${code}`);
+  const { result, stdout, stderr } = await http.post<EvalResult>('/eval', { code, modulePath: filePath }).then(r => r.data);
+  outputChannel.appendLine(`[LOG] Result: ${result}`);
+  const overlayText = `=> ${result === undefined ? 'undefined' : result.toString()}`;
+
+  if (stdout) outputChannel.appendLine(`[STDOUT] ${stdout}`);
+  if (stderr) outputChannel.appendLine(`[STDERR] ${stderr}`);
+
+  if (!evalOverlay) {
+    evalOverlay = makeOverlay(selection, overlayText);
+  } else {
+    evalOverlay = updateOverlay(evalOverlay, selection, overlayText);
+  }
+  editor.setDecorations(overlayType, [evalOverlay]);
 }
 
 function makeOverlay(selection: Range, text: string) {
   const decoration: DecorationOptions = {
     range: selection,
-    renderOptions: {
-      after: {
-        contentText: text,
-        margin: "0 0 0 0.5rem",
-        border: "1px solid white"
-      }
-    }
-  };
+    renderOptions: { after: { contentText: text } }};
   return decoration;
+}
+
+function updateOverlay(overlay: DecorationOptions, newRange: Range, newText: string) {
+  overlay.range = newRange;
+  overlay.renderOptions!.after!.contentText = newText;
+  return overlay;
+}
+
+function hideOverlays(editor: TextEditor) {
+  editor.setDecorations(overlayType, []);
 }
 
 // this method is called when your extension is deactivated

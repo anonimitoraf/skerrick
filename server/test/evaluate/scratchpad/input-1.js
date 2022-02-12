@@ -2,6 +2,6 @@ export function f (x) {
   return x + x;
 }
 
-function g (x) {
+export function g (x) {
   return f(x) + x;
 }

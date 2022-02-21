@@ -1,5 +1,7 @@
 import _ from 'lodash';
-import path from 'path';
+import { createRequire } from 'module';
+import fsPath from 'path';
+import fs from 'fs';
 import * as babel from '@babel/core';
 import * as t from '@babel/types';
 import { Binding, NodePath, Scope } from '@babel/traverse';
@@ -32,6 +34,7 @@ interface Import {
   importedNamespace: Namespace
   imported: string | symbol;
   local: string;
+  isBuiltIn?: boolean;
 }
 type ImportsByLocal = Map<Import['local'], Import>;
 const valueImports = new Map<Namespace, ImportsByLocal>();
@@ -43,8 +46,8 @@ interface NamespaceImport {
 type NamespaceImportsByLocal = Map<NamespaceImport['local'], NamespaceImport>;
 const namespaceImports = new Map<Namespace, NamespaceImportsByLocal>();
 
-export function evaluate(namespace: string, code: string, debug?: boolean) {
-  const codeTransformed = transform(namespace, code);
+export async function evaluate(namespace: string, code: string, evalImports?: boolean, debug?: boolean) {
+  const codeTransformed = transform(namespace, code, evalImports);
 
   if (debug) {
     console.log(`code transformed:\n${codeTransformed}`);
@@ -54,19 +57,30 @@ export function evaluate(namespace: string, code: string, debug?: boolean) {
   const ns: NamespaceValuesByKey = namespaces.get(namespace) || new Map();
   const nsImports: ImportsByLocal = valueImports.get(namespace) || new Map();
 
-  const nsImportsForScope = _([...nsImports.entries()])
-    .map(([local, { importedNamespace, imported }]) => {
-      if (imported === symbols.namespaceExport) {
-        return [local, constructNamespaceExport(importedNamespace)];
+  const nsImportsForScope = {};
+  for (const [local, { importedNamespace, imported, isBuiltIn }] of nsImports.entries()) {
+      if (!isBuiltIn && imported === symbols.namespaceExport) {
+        nsImportsForScope[local] = constructNamespaceExport(importedNamespace);
+      } else if (isBuiltIn) {
+        const module = await import(importedNamespace);
+        switch (imported) {
+          case symbols.defaultExport:
+            nsImportsForScope[local] = module.default;
+            break;
+          case symbols.namespaceExport:
+            nsImportsForScope[local] = module;
+            break;
+          default:
+            nsImportsForScope[local] = module[imported];
+            break;
+        }
       } else {
         const nsExports = valueExports.get(importedNamespace);
         const exported = nsExports?.get(imported);
         const exportedValue = exported && namespaces.get(importedNamespace)?.get(exported.local);
-        return [local, exportedValue];
+        nsImportsForScope[local] = exportedValue;
       }
-    })
-    .fromPairs()
-    .value();
+  }
 
   const nsForScope = _([...ns.entries()])
     .map(([k, v]) => [k, v])
@@ -75,8 +89,8 @@ export function evaluate(namespace: string, code: string, debug?: boolean) {
 
   if (debug) {
     // console.log('all exports', namespaceExports);
-    // console.log('all imports', namespaceImports);
-    // console.log('ns imports for scope', nsImportsForScope);
+    console.log('all imports', namespaceImports);
+    console.log('ns imports for scope', nsImportsForScope);
   }
 
   return eval(`
@@ -137,18 +151,19 @@ function registerValueImport(
   importingNamespace: string,
   local: Import['local'],
   imported: Import['imported'],
-  importedNamespace: string
+  importedNamespace: string,
+  isBuiltIn = false
 ) {
-  const absoluteImportedNamespace = path.join(path.dirname(importingNamespace), importedNamespace)
+  const absoluteImportedNamespace = normalizeImportPath(importingNamespace, importedNamespace);
   const imports: ImportsByLocal = valueImports.get(importingNamespace) || new Map();
   valueImports.set(importingNamespace, imports);
-  imports.set(local, { imported, local, importedNamespace: absoluteImportedNamespace });
+  imports.set(local, { imported, local, importedNamespace: absoluteImportedNamespace, isBuiltIn });
   return local;
 }
 
-export function transform(namespace: string, code: string) {
+export function transform(namespace: string, code: string, evalImports?: boolean) {
   const output = babel.transformSync(code, {
-    plugins: [transformer],
+    plugins: [transformer(evalImports)],
     filename: namespace,
     parserOpts: {
       allowUndeclaredExports: true,
@@ -165,8 +180,8 @@ function extractFileName(state: PluginPass) {
   return filename;
 }
 
-function transformer() {
-  return {
+function transformer(evalImports?: boolean) {
+  return () => ({
     visitor: {
       Program(path: NodePath<t.Program>, state: PluginPass) {
         const fileName = extractFileName(state);
@@ -291,9 +306,18 @@ function transformer() {
       ImportDeclaration: {
         enter: (path: NodePath<t.ImportDeclaration>, state: PluginPass) => {
           const fileName = extractFileName(state);
+          const importedNamespace = normalizeImportPath(fileName, path.node.source.value);
+
+          const isBuiltIn = !fsPath.isAbsolute(importedNamespace);
+
+          // Check whether we want to evaluate a module. We don't re-evaluate it if it's previously
+          // been evaluated to avoid infinite recursion if there are cyclic deps
+          if (!isBuiltIn && evalImports && !namespaces.get(importedNamespace)) {
+            evaluate(importedNamespace, fs.readFileSync(importedNamespace, { encoding: 'utf8' }));
+          }
 
           if (path.node.specifiers.length <= 0) {
-            // TODO Importing for side-effects
+            // TODO Importing for side-effects - Do I even need to do anything here?
           }
 
           for (const specifier of path.node.specifiers) {
@@ -303,7 +327,8 @@ function transformer() {
                   fileName,
                   specifier.local.name,
                   symbols.namespaceExport,
-                  path.node.source.value
+                  path.node.source.value,
+                  isBuiltIn
                 );
                 break;
               case 'ImportDefaultSpecifier':
@@ -311,7 +336,8 @@ function transformer() {
                   fileName,
                   specifier.local.name,
                   symbols.defaultExport,
-                  path.node.source.value
+                  path.node.source.value,
+                  isBuiltIn
                 );
                 break;
               case 'ImportSpecifier':
@@ -321,7 +347,8 @@ function transformer() {
                   specifier.imported.type === 'StringLiteral'
                     ? specifier.imported.value
                     : specifier.imported.name,
-                  path.node.source.value
+                  path.node.source.value,
+                  isBuiltIn
                 );
                 break;
               default:
@@ -334,6 +361,16 @@ function transformer() {
         }
       }
     }
+  })
+}
+
+function normalizeImportPath(importingNamespace: string, importedNamespace: string) {
+  try {
+    const req = createRequire(importingNamespace);
+    return req.resolve(importedNamespace);
+  } catch (e) {
+    console.error("Failed to normalize import path: ", e);
+    throw e;
   }
 }
 

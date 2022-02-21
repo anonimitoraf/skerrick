@@ -1,4 +1,4 @@
-import Foo from '/input-3.js'
+import Foo from './input-3.js'
 
 const foo = new Foo();
 

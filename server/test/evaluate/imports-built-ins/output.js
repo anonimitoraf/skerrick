@@ -1,0 +1,5 @@
+bleh.png
+// ---
+.png
+// ---
+blah

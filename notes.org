@@ -5,9 +5,12 @@
 * TODOs
 ** [X] Fix exports: bindings being repeated N! times
 CLOSED: [2022-02-09 Wed 09:07]
-** [ ] Auto-evaluation of the project (e.g. starting from =index.js=)
-** [ ] Support evaluation of node_modules
-** [ ] Implement importing for side-effects (e.g. =import from '/blah'=)
+** [X] Support importing of built-ins (e.g. ='fs'=)
+** [ ] Auto-evaluation of dependencies (e.g. starting from =index.js=)
+*** [ ] Test if cyclic deps are supported
+** [ ] Support commonjs modules
+** [ ] Stack traces
+
 ** [ ] Support dynamic imports
 ** [ ] Typescript support
 * Document caveats

@@ -12,33 +12,38 @@ const dirs = isScratch
   : [
     'basic',
     'exports-and-imports',
-    'default-exports-and-imports'
+    'default-exports-and-imports',
+    'imports-built-ins'
   ]
 
-for (const dir of dirs) {
-  const delimiter = "// ---";
+const delimiter = "// ---";
 
-  const rootDir = path.join(__dirname, dir);
+(async () => {
+  for (const dir of dirs) {
+    console.log('--------------------------------------------------------');
+    console.log(' Evaluation: ' + dir);
+    console.log('--------------------------------------------------------');
 
-  const inputAndOutputPaths = fs.readdirSync(rootDir)
-    .filter(f => /^input.*/.test(f))
-    .map(f => [f, f.replace(/^input(.*)/, 'output$1')])
-    .map(([input, output]) => [path.join(rootDir, input), path.join(rootDir, output)]);
+    const rootDir = path.join(__dirname, dir);
 
-  for (const [inputPath, outputPath] of inputAndOutputPaths) {
-    const inputBlocksToEval = fs.readFileSync(inputPath, 'utf-8').split(delimiter);
-    const output = inputBlocksToEval
-      .map(code => {
-        try {
-          // `/` to force the filename to be treated as absolute
-          return evaluate('/' + path.basename(inputPath), code, isScratch);
-        } catch (e) {
-          return e.stack || e.message;
-        }
-      })
-      .join('\n' + delimiter + '\n');
-    fs.writeFileSync(outputPath, output);
+    const inputAndOutputPaths = fs.readdirSync(rootDir)
+      .filter(f => /^input.*/.test(f))
+      .map(f => [f, f.replace(/^input(.*)/, 'output$1')])
+      .map(([input, output]) => [path.join(rootDir, input), path.join(rootDir, output)]);
+
+    for (const [inputPath, outputPath] of inputAndOutputPaths) {
+      const inputBlocksToEval = fs.readFileSync(inputPath, 'utf-8').split(delimiter);
+      await Promise.all(inputBlocksToEval
+        .map(code => {
+          try {
+            // `/` to force the filename to be treated as absolute
+            return evaluate(inputPath, code, true, isScratch);
+          } catch (e) {
+            return Promise.resolve(e.stack || e.message);
+          }
+        })).then(xs => fs.writeFileSync(outputPath, xs.join('\n' + delimiter + '\n')));
+    }
   }
-}
+})();
 
 stopServer();

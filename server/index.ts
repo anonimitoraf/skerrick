@@ -15,8 +15,8 @@ export function serve(port = 4321) {
   server.use(express.urlencoded({ extended: true }));
   server.use(express.json());
 
-  server.post('/eval', (req, res) => {
-    const { code, modulePath } = req.body;
+  server.post('/eval', async (req, res) => {
+    const { code, modulePath, initial } = req.body;
 
     if (!modulePath || !code) {
       throw new Error(`Both modulePath and code are required in the req body!`);
@@ -26,7 +26,7 @@ export function serve(port = 4321) {
     }
 
     try {
-      const result = evaluate(modulePath, code);
+      const result = await evaluate(modulePath, code, initial);
       res.status(200).send({ result, stdout, stderr });
     } catch (e) {
       res.status(200).send({ stderr: removeEscapeCodes(e.stack || e.message) });

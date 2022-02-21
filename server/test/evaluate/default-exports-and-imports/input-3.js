@@ -1,4 +1,4 @@
-import defaultExport from '/input-2.js'
+import defaultExport from './input-2.js'
 
 export default class Foo {
   bar () {

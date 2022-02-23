@@ -8,6 +8,10 @@ CLOSED: [2022-02-09 Wed 09:07]
 ** [X] Support importing of built-ins (e.g. ='fs'=)
 ** [ ] Auto-evaluation of dependencies (e.g. starting from =index.js=)
 *** [ ] Test if cyclic deps are supported
+*** The problem here is that the Skerrick needs to be able to access all the files of the project.
+- Either, Skerrick is started as part of the project OR
+- The editor sends Skerrick the files it needs to evaluate - 2 way comms needed
+For now, I'll support the former since it seems easier to do. Actually, the latter might not be feasible. Imagine having to send MBs of node_modules files across the wire!
 ** [ ] Support commonjs modules
 ** [ ] Stack traces
 

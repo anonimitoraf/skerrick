@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { v4 as uuid } from 'uuid';
 import { createRequire } from 'module';
 import fsPath from 'path';
 import fs from 'fs';
@@ -82,6 +83,57 @@ export async function evaluate(namespace: string, code: string, evalImports?: bo
       }
   }
 
+  const requireStub = function (requiredNs: string) {
+    const nsExport = constructNamespaceExport(normalizeImportPath(namespace, requiredNs));
+    return nsExport;
+  }
+  const exportsStub = new Proxy({}, {
+    set(obj, prop, value) {
+      const id = uuid();
+      registerValue(namespace, id, value);
+      if (prop === 'default') {
+        registerDefaultValueExport(namespace, id);
+      } else {
+        registerValueExport(namespace, id, prop);
+      }
+      return true;
+    },
+    get(target, prop, receiver) {
+      const key = prop === 'default' ? symbols.defaultExport : prop;
+      return valueExports.get(namespace)?.get(key);
+    }
+  })
+
+  const moduleStub = new Proxy({
+    exports: exportsStub
+  }, {
+    set(obj, prop, value) {
+      obj[prop] = value;
+
+      if (prop === 'exports') {
+        for (const [k, v] of Object.entries(value)) {
+          const id = uuid();
+          registerValue(namespace, id, v);
+          if (k === 'default') {
+            registerDefaultValueExport(namespace, id);
+          } else {
+            registerValueExport(namespace, id, k);
+          }
+        }
+      }
+      return true;
+    }
+  });
+  const __filenameStub = namespace;
+  const __dirnameStub = fsPath.dirname(namespace);
+  const cjsStubs = {
+    module: moduleStub,
+    exports: moduleStub.exports,
+    require: requireStub,
+    __filename: __filenameStub,
+    __dirname: __dirnameStub
+  };
+
   const nsForScope = _([...ns.entries()])
     .map(([k, v]) => [k, v])
     .fromPairs()
@@ -95,16 +147,18 @@ export async function evaluate(namespace: string, code: string, evalImports?: bo
   }
 
   return eval(`
-    with (nsImportsForScope) {
-      with (nsForScope) {
-        (function () {
-          "use strict";
-          try {
-              ${codeTransformed}
-          } catch (e) {
-            console.error(e);
-          }
-        })();
+    with (cjsStubs) {
+      with (nsImportsForScope) {
+        with (nsForScope) {
+          (function () {
+            "use strict";
+            try {
+                ${codeTransformed}
+            } catch (e) {
+              console.error(e);
+            }
+          })();
+        }
       }
     }`);
 }
@@ -112,11 +166,20 @@ export async function evaluate(namespace: string, code: string, evalImports?: bo
 function constructNamespaceExport(namespace: string) {
   const values: NamespaceValuesByKey = namespaces.get(namespace) || new Map();
   const exports: ExportsByExported = valueExports.get(namespace) || new Map();
-  const nsExport = _([...values.entries()])
-    .map(([k, v]) => exports.get(k) && [k, v])
+  console.log('values', values);
+  console.log('exports', exports);
+  const nsExport = _([...exports.values()])
+    .map(({ exported, local }) => {
+      const v = values.get(local);
+      switch (exported) {
+        case symbols.defaultExport: return ['default', v];
+        default: return [exported, v];
+      }
+    })
     .filter(x => !!x)
     .fromPairs()
     .value();
+  console.log('ns export', nsExport);
   return nsExport;
 }
 
@@ -188,6 +251,8 @@ function transformer(evalImports?: boolean, debug?: boolean) {
         const fileName = extractFileName(state);
         for (const [bindingKey, binding] of Object.entries(path.scope.bindings)) {
           // console.log('BINDING:', bindingKey, 'path node type:', binding.path.type);
+          // NOTE: Imports are not bound/stored as values within the namespace. They are instead
+          // resolved dynamically when evaluating code.
           if (binding.path.type === 'ImportSpecifier') {
             continue;
           }

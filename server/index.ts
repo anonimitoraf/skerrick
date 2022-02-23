@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import express from 'express';
 import process from 'process';
@@ -6,7 +7,14 @@ import captureConsole from 'capture-console';
 import { evaluate } from './engine';
 
 /** Instantiates a Skerrick server. Returns a fn that stops the server. */
-export function serve(port = 4321) {
+export function serve(port = 4321, entryFilePath?: string) {
+  if (entryFilePath) {
+    if (!path.isAbsolute(entryFilePath)) {
+      throw Error(`Entry file path needs to be absolute. Got ${entryFilePath}`);
+    }
+    evaluate(entryFilePath, fs.readFileSync(entryFilePath, { encoding: 'utf-8' }), true, true);
+  }
+
   const server = express();
 
   let stdout = '';
@@ -16,7 +24,7 @@ export function serve(port = 4321) {
   server.use(express.json());
 
   server.post('/eval', async (req, res) => {
-    const { code, modulePath, initial } = req.body;
+    const { code, modulePath } = req.body;
 
     if (!modulePath || !code) {
       throw new Error(`Both modulePath and code are required in the req body!`);
@@ -26,7 +34,7 @@ export function serve(port = 4321) {
     }
 
     try {
-      const result = await evaluate(modulePath, code, initial);
+      const result = await evaluate(modulePath, code, false, true);
       res.status(200).send({ result, stdout, stderr });
     } catch (e) {
       res.status(200).send({ stderr: removeEscapeCodes(e.stack || e.message) });

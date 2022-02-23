@@ -58,18 +58,23 @@
     (when stderr (skerrick--append-to-process-buffer (skerrick--propertize-error stderr)))
     (skerrick--display-overlay (format " => %s " (if result result "undefined")) 'skerrick-result-overlay-face)))
 
+(defvar skerrick--initial? t)
+
 (defun skerrick--send-eval-req (code module-path)
   "Send CODE and MODULE-PATH to sever."
   (request
     (concat skerrick--server-url "/eval")
     :type "POST"
-    :data (json-encode `(("code" . ,code) ("modulePath" . ,module-path)))
+    :data (json-encode `(("code" . ,code)
+                         ("modulePath" . ,module-path)
+                         ("initial" . ,skerrick--initial?)))
     :parser 'json-read
     :encoding 'utf-8
     :headers '(("Content-Type" . "application/json"))
     :success (cl-function (lambda (&key data &allow-other-keys)
                             ;; (message "DATA %s" data)
-                            (skerrick--process-server-response data)))))
+                            (skerrick--process-server-response data))))
+  (setq skerrick--initial? nil))
 
 (defun skerrick-remove-eval-overlay ()
   (interactive)

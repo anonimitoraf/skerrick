@@ -47,7 +47,7 @@ type NamespaceImportsByLocal = Map<NamespaceImport['local'], NamespaceImport>;
 const namespaceImports = new Map<Namespace, NamespaceImportsByLocal>();
 
 export async function evaluate(namespace: string, code: string, evalImports?: boolean, debug?: boolean) {
-  const codeTransformed = transform(namespace, code, evalImports);
+  const codeTransformed = transform(namespace, code, evalImports, debug);
 
   if (debug) {
     console.log(`code transformed:\n${codeTransformed}`);
@@ -91,6 +91,7 @@ export async function evaluate(namespace: string, code: string, evalImports?: bo
     // console.log('all exports', namespaceExports);
     console.log('all imports', namespaceImports);
     console.log('ns imports for scope', nsImportsForScope);
+    console.log('ns for scope', nsForScope);
   }
 
   return eval(`
@@ -161,9 +162,9 @@ function registerValueImport(
   return local;
 }
 
-export function transform(namespace: string, code: string, evalImports?: boolean) {
+export function transform(namespace: string, code: string, evalImports?: boolean, debug?: boolean) {
   const output = babel.transformSync(code, {
-    plugins: [transformer(evalImports)],
+    plugins: [transformer(evalImports, debug)],
     filename: namespace,
     parserOpts: {
       allowUndeclaredExports: true,
@@ -180,18 +181,22 @@ function extractFileName(state: PluginPass) {
   return filename;
 }
 
-function transformer(evalImports?: boolean) {
+function transformer(evalImports?: boolean, debug?: boolean) {
   return () => ({
     visitor: {
       Program(path: NodePath<t.Program>, state: PluginPass) {
         const fileName = extractFileName(state);
-        for (const [, binding] of Object.entries(path.scope.bindings)) {
+        for (const [bindingKey, binding] of Object.entries(path.scope.bindings)) {
+          // console.log('BINDING:', bindingKey, 'path node type:', binding.path.type);
+          if (binding.path.type === 'ImportSpecifier') {
+            continue;
+          }
           const registerValueExpr = t.callExpression(
             t.identifier(registerValue.name), [
-              t.stringLiteral(fileName),
-              t.stringLiteral(binding.identifier.name),
-              binding.identifier
-            ]);
+            t.stringLiteral(fileName),
+            t.stringLiteral(binding.identifier.name),
+            binding.identifier
+          ]);
           const parent = binding.path.parentPath;
           if (!parent) continue;
           // For variable declarations, the parent is "VariableDeclaration".
@@ -313,7 +318,8 @@ function transformer(evalImports?: boolean) {
           // Check whether we want to evaluate a module. We don't re-evaluate it if it's previously
           // been evaluated to avoid infinite recursion if there are cyclic deps
           if (!isBuiltIn && evalImports && !namespaces.get(importedNamespace)) {
-            evaluate(importedNamespace, fs.readFileSync(importedNamespace, { encoding: 'utf8' }));
+            namespaces.set(importedNamespace, new Map());
+            evaluate(importedNamespace, fs.readFileSync(importedNamespace, { encoding: 'utf8' }), evalImports, debug);
           }
 
           if (path.node.specifiers.length <= 0) {

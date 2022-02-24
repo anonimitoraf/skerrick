@@ -9,7 +9,7 @@
 ;; Version: 0.0.1
 ;; Keywords: javascript js repl repl-driven
 ;; Homepage: https://github.com/anonimitoraf/skerrick
-;; Package-Requires: ((emacs "27.1") (request "0.2.0"))
+;; Package-Requires: ((emacs "27.1"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -40,18 +40,23 @@
 (defvar skerrick--eval-overlay nil)
 (defvar skerrick--remove-eval-overlay-on-next-cmd? nil)
 
-(defun skerrick--propertize-error (error) (propertize error 'face '(:foreground "red")))
+(defun skerrick--propertize-error (error)
+  "Style ERROR msg."
+  (propertize error 'face '(:foreground "red")))
 
 (defun skerrick--display-overlay (value face)
+  "Show an overlay containing VALUE customized by FACE."
   (overlay-put skerrick--eval-overlay 'before-string
                (propertize value 'face face)))
 
 (defun skerrick--append-to-process-buffer (value)
+  "Append VALUE to designated buffer."
   (with-current-buffer (get-buffer-create skerrick--process-buffer)
     (goto-char (point-max)) ; Append to buffer
     (insert value ?\n)))
 
 (defun skerrick--process-server-response (response)
+  "Process RESPONSE from skerrick server."
   (let* ((stdout (alist-get 'stdout response))
           (stderr (alist-get 'stderr response))
           (result (alist-get 'result response)))
@@ -74,6 +79,7 @@
                             (skerrick--process-server-response data)))))
 
 (defun skerrick-remove-eval-overlay ()
+  "Remove eval overlay."
   (interactive)
   (when (overlayp skerrick--eval-overlay)
     (delete-overlay skerrick--eval-overlay)
@@ -99,11 +105,13 @@
     (skerrick--send-eval-req selected-code (buffer-file-name))))
 
 (defun skerrick-install-or-upgrade-server-binary ()
+  "Install or upgrade skerrick from NPM."
   (interactive)
   (async-shell-command "npm install -g skerrick"))
 
 (defvar skerrick-process nil)
 (defun skerrick-start-server ()
+  "Start skerrick server."
   (interactive)
   (if (and skerrick-process (process-live-p skerrick-process))
     (message "Skerrick server already running")
@@ -113,6 +121,7 @@
       (message "Started skerrick server on %s" skerrick-server-port))))
 
 (defun skerrick-stop-server ()
+  "Stop skerrick server."
   (interactive)
   (if (and skerrick-process (process-live-p skerrick-process))
     (progn

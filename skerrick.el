@@ -88,6 +88,7 @@
 (add-hook 'post-command-hook (lambda () (when skerrick--remove-eval-overlay-on-next-cmd?
                                      (skerrick-remove-eval-overlay))))
 
+;;;###autoload
 (defun skerrick-eval-region ()
   "Evaluate the selected JS code."
   (interactive)
@@ -104,12 +105,15 @@
       (setq skerrick--eval-overlay (make-overlay (point) (point) (current-buffer))))
     (skerrick--send-eval-req selected-code (buffer-file-name))))
 
+;;;###autoload
 (defun skerrick-install-or-upgrade-server-binary ()
   "Install or upgrade skerrick from NPM."
   (interactive)
   (async-shell-command "npm install -g skerrick"))
 
 (defvar skerrick-process nil)
+
+;;;###autoload
 (defun skerrick-start-server ()
   "Start skerrick server."
   (interactive)
@@ -120,6 +124,7 @@
                               "skerrick" (prin1-to-string skerrick-server-port) (buffer-file-name)))
       (message "Started skerrick server on %s" skerrick-server-port))))
 
+;;;###autoload
 (defun skerrick-stop-server ()
   "Stop skerrick server."
   (interactive)

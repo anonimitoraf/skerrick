@@ -35,7 +35,7 @@
   "Face used to display evaluation results at the end of line."
   :group 'skerrick)
 
-(defvar skerrick--server-port 4321)
+(defvar skerrick-server-port 4321)
 (defvar skerrick--process-buffer "*skerrick-stdout-stderr*")
 (defvar skerrick--eval-overlay nil)
 (defvar skerrick--remove-eval-overlay-on-next-cmd? nil)
@@ -63,7 +63,7 @@
 (defun skerrick--send-eval-req (code module-path)
   "Send CODE and MODULE-PATH to sever."
   (request
-    (concat "http://localhost:" (prin1-to-string skerrick--server-port) "/eval")
+    (concat "http://localhost:" (prin1-to-string skerrick-server-port) "/eval")
     :type "POST"
     :data (json-encode `(("code" . ,code)
                           ("modulePath" . ,module-path)))
@@ -98,7 +98,7 @@
       (setq skerrick--eval-overlay (make-overlay (point) (point) (current-buffer))))
     (skerrick--send-eval-req selected-code (buffer-file-name))))
 
-(defun skerrick-install-or-upgrade ()
+(defun skerrick-install-or-upgrade-server-binary ()
   (interactive)
   (async-shell-command "npm install -g skerrick"))
 
@@ -109,8 +109,8 @@
     (message "Skerrick server already running")
     (progn
       (setq skerrick-process (start-process "skerrick-server" "*skerrick-server*"
-                              "skerrick" (prin1-to-string skerrick--server-port) (buffer-file-name)))
-      (message "Started skerrick server on %s" skerrick--server-port))))
+                              "skerrick" (prin1-to-string skerrick-server-port) (buffer-file-name)))
+      (message "Started skerrick server on %s" skerrick-server-port))))
 
 (defun skerrick-stop-server ()
   (interactive)

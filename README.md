@@ -13,25 +13,25 @@
 ### Currently supported editors:
 * VSCode
 * Emacs
-TODO Installation instructions
 
 Inspired by (check them out!):
 * SLIME: The Superior Lisp Interaction Mode for Emacs
 * CIDER: The Clojure(Script) Interactive Development Environment that Rocks!
 
-### Demos
-* TODO
+### Emacs
 
-### Usage
-* TODO
+#### Requirements
+* `node`/`npm` installed and accessible by Emacs
 
-### Configuration
-* `skerrick-result-overlay-face` - Face used to display evaluation results
+#### Configuration
+* `skerrick-server-port`         - Port to run the `skerrick` server on (default: `4321`).
+* `skerrick-result-overlay-face` - Face used to display evaluation results.
 
-### Bugs
-* Requires and exports happen in the context of `skerrick/server/index.ts`. It should instead happen on the context of the passed in modulePath
+#### Usage
+* `skerrick-install-or-upgrade-server-binary` - Needs to be run on the very first install of skerrick. Or when you want to upgrade.
+* `skerrick-start-server` - Starts the server. Note that your current buffer will be evaluated, so you probably want to run this command while being on your program's entry point file.
+* `skerrick-stop-server`  - Stops the server.
+* `skerrick-eval-region`  - Evaluates the selected region. Shows the eval results as an overlay. Stdout/stderr get written to the buffer `*skerrick-stdout-stderr*`.
 
-### Roadmap
-* Get it into MELPA
-* Fill out the rest of this README
-* Evaluation of the entry file on start up - might have to prompt the user and/or support the configuration via elisp
+### VSCode
+TODO

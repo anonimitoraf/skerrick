@@ -12,19 +12,24 @@ CLOSED: [2022-02-09 Wed 09:07]
 - Either, Skerrick is started as part of the project OR
 - The editor sends Skerrick the files it needs to evaluate - 2 way comms needed
 For now, I'll support the former since it seems easier to do. Actually, the latter might not be feasible. Imagine having to send MBs of node_modules files across the wire!
-** [ ] Support commonjs modules [3/9]
+** [ ] Support commonjs modules [4/17]
 *** [X] module.exports = { x: 1 }
-CLOSED: [2022-02-24 Thu 17:40]
-- This should export ={ x: 1 }= as =default=, but also export =x: 1=
 *** [X] module.exports.x = 'something'
-CLOSED: [2022-02-24 Thu 17:40]
-*** [ ] exports = { x: 1 }
-*** [ ] exports.x = 'something'
+*** [X] exports.x = 'something'
 *** [X] require('ns')
-CLOSED: [2022-02-24 Thu 17:41]
 *** [ ] require.resolve
-*** [ ] Clean up of exports. At the moment, intermediate values stay in the namespaces
+*** [ ] require.cache
+*** [ ] require.main
+*** [ ] module.children
+*** [ ] module.filename
+*** [ ] module.id
+*** [ ] module.isPreloading
+*** [ ] module.loaded
+*** [ ] module.path
+*** [ ] module.paths
+*** [ ] module.require
 *** [ ] Auto-eval of cjs stuff. At the moment only es6 ones get auto-eval
+*** [ ] Clean up of exports. At the moment, intermediate values stay in the namespaces
 ** [ ] Stack traces
 ** [ ] Support dynamic imports
 ** [ ] Check behavior of native libs - is special consideration needed?

@@ -7,7 +7,7 @@
 ;; Created: January 01, 2022
 ;; Modified: January 01, 2022
 ;; Version: 0.0.1
-;; Keywords: javascript js repl repl-driven
+;; Keywords: languages javascript js repl repl-driven
 ;; Homepage: https://github.com/anonimitoraf/skerrick
 ;; Package-Requires: ((emacs "27.1"))
 ;;

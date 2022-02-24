@@ -22,6 +22,13 @@ Inspired by (check them out!):
 ### Requirements
 * `node`/`npm` installed and accessible by Emacs
 
+### Installation
+* `skerrick` isn't in MELPA yet. You can clone this repo and evaluate `skerrick.el` in the meantime or use `straight`. For example, if you use Doom:
+```sh
+(package! skerrick
+  :recipe (:host github :repo "anonimitoraf/skerrick"))
+```
+
 ### Configuration
 * `skerrick-server-port`         - Port to run the `skerrick` server on (default: `4321`).
 * `skerrick-result-overlay-face` - Face used to display evaluation results.

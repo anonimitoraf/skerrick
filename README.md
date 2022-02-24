@@ -4,6 +4,10 @@
 >   the smallest bit.  
 >   _"there's not a skerrick of food in the house"_
 
+## :warning: IMPORTANT :warning:
+THIS PROJECT IS IN ALPHA STATE!
+I WOULD APPRECIATE IT IF YOU REPORT ANY BUGS/ISSUES YOU FIND. MAYBE EVEN CONTRIBUTE PATCHES/FIXES IF YOU HAVE THE TIME ;)
+
 ## Why should I care?
 
 * REPL-driven development for Javascript

@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _, { values } from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { createRequire } from 'module';
 import fsPath from 'path';
@@ -84,23 +84,33 @@ export async function evaluate(namespace: string, code: string, evalImports?: bo
   }
 
   const requireStub = function (requiredNs: string) {
-    const nsExport = constructNamespaceExport(normalizeImportPath(namespace, requiredNs));
-    return nsExport;
+    const requiredNsNormalized = normalizeImportPath(namespace, requiredNs);
+    const defaultExport = valueExports.get(requiredNsNormalized)?.get(symbols.defaultExport);
+    const result = defaultExport && namespaces.get(requiredNsNormalized)?.get(defaultExport.local);
+    return result;
   }
+
   const exportsStub = new Proxy({}, {
     set(obj, prop, value) {
-      const id = uuid();
-      registerValue(namespace, id, value);
-      if (prop === 'default') {
-        registerDefaultValueExport(namespace, id);
+      const localKeyOfDefaultExport = valueExports.get(namespace)?.get(symbols.defaultExport)?.local;
+      if (localKeyOfDefaultExport) {
+        const defaultExport = namespaces.get(namespace)?.get(localKeyOfDefaultExport);
+        if (defaultExport) {
+          defaultExport[prop] = value;
+        }
       } else {
-        registerValueExport(namespace, id, prop);
+        const id = uuid();
+        registerValue(namespace, id, { [prop]: value });
+        registerDefaultValueExport(namespace, id);
       }
       return true;
     },
     get(target, prop, receiver) {
-      const key = prop === 'default' ? symbols.defaultExport : prop;
-      return valueExports.get(namespace)?.get(key);
+      // TODO Find out if `exports.default` needs to be supported
+      const exportsOfNs = valueExports.get(namespace)?.values() || [];
+      console.log('exports of ns', exportsOfNs);
+      const exportValue = [...exportsOfNs].find(e => e.local === prop);
+      return exportValue;
     }
   })
 
@@ -111,15 +121,15 @@ export async function evaluate(namespace: string, code: string, evalImports?: bo
       obj[prop] = value;
 
       if (prop === 'exports') {
-        for (const [k, v] of Object.entries(value)) {
-          const id = uuid();
-          registerValue(namespace, id, v);
-          if (k === 'default') {
-            registerDefaultValueExport(namespace, id);
-          } else {
-            registerValueExport(namespace, id, k);
-          }
-        }
+        const id = uuid();
+        registerValue(namespace, id, value);
+        registerDefaultValueExport(namespace, id);
+
+        // for (const [k, v] of Object.entries(value)) {
+        //   const id = uuid();
+        //   registerValue(namespace, id, v);
+        //   registerValueExport(namespace, id, k);
+        // }
       }
       return true;
     }

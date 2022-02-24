@@ -14,5 +14,5 @@ module.exports = {
 }
 // module.exports['c'] = 5;
 
-// import _ from 'lodash';
-// _.add(5, 5);
+// const x = 42;
+// export default x;

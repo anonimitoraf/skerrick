@@ -13,7 +13,8 @@ const dirs = isScratch
     'basic',
     'exports-and-imports',
     'default-exports-and-imports',
-    'imports-built-ins'
+    'imports-built-ins',
+    'commonjs'
   ]
 
 const delimiter = "// ---";
@@ -41,7 +42,10 @@ const delimiter = "// ---";
           } catch (e) {
             return Promise.resolve(e.stack || e.message);
           }
-        })).then(xs => fs.writeFileSync(outputPath, xs.join('\n' + delimiter + '\n')));
+        })).then(xs => fs.writeFileSync(outputPath, xs
+          .map(x => typeof x === 'object' ? JSON.stringify(x, null, 2) : x)
+          .join('\n' + delimiter + '\n')
+        ));
     }
   }
 })();

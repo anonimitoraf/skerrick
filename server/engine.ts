@@ -47,7 +47,7 @@ interface NamespaceImport {
 type NamespaceImportsByLocal = Map<NamespaceImport['local'], NamespaceImport>;
 const namespaceImports = new Map<Namespace, NamespaceImportsByLocal>();
 
-export async function evaluate(namespace: string, code: string, evalImports?: boolean, debug?: boolean) {
+export function evaluate(namespace: string, code: string, evalImports?: boolean, debug?: boolean) {
   const codeTransformed = transform(namespace, code, evalImports, debug);
 
   if (debug) {
@@ -63,10 +63,10 @@ export async function evaluate(namespace: string, code: string, evalImports?: bo
       if (!isBuiltIn && imported === symbols.namespaceExport) {
         nsImportsForScope[local] = constructNamespaceExport(importedNamespace);
       } else if (isBuiltIn) {
-        const module = await import(importedNamespace);
+        const module = createRequire(namespace)(importedNamespace);
         switch (imported) {
           case symbols.defaultExport:
-            nsImportsForScope[local] = module.default;
+            nsImportsForScope[local] = module;
             break;
           case symbols.namespaceExport:
             nsImportsForScope[local] = module;
@@ -83,10 +83,14 @@ export async function evaluate(namespace: string, code: string, evalImports?: bo
       }
   }
 
+  // TODO Transform `requires` => `await require`
   const requireStub = function (requiredNs: string) {
     const requiredNsNormalized = normalizeImportPath(namespace, requiredNs);
     const defaultExport = valueExports.get(requiredNsNormalized)?.get(symbols.defaultExport);
     const result = defaultExport && namespaces.get(requiredNsNormalized)?.get(defaultExport.local);
+    if (evalImports) {
+      evaluate(requiredNsNormalized, fs.readFileSync(requiredNsNormalized, { encoding: 'utf8' }), evalImports, debug);
+    }
     return result;
   }
 

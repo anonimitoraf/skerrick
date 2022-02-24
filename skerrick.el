@@ -35,7 +35,7 @@
   "Face used to display evaluation results at the end of line."
   :group 'skerrick)
 
-(defvar skerrick--server-url "http://localhost:4321")
+(defvar skerrick--server-port 4321)
 (defvar skerrick--process-buffer "*skerrick-stdout-stderr*")
 (defvar skerrick--eval-overlay nil)
 (defvar skerrick--remove-eval-overlay-on-next-cmd? nil)
@@ -63,7 +63,7 @@
 (defun skerrick--send-eval-req (code module-path)
   "Send CODE and MODULE-PATH to sever."
   (request
-    (concat skerrick--server-url "/eval")
+    (concat "http://localhost:" (prin1-to-string skerrick--server-port) "/eval")
     :type "POST"
     :data (json-encode `(("code" . ,code)
                           ("modulePath" . ,module-path)))
@@ -71,7 +71,6 @@
     :encoding 'utf-8
     :headers '(("Content-Type" . "application/json"))
     :success (cl-function (lambda (&key data &allow-other-keys)
-                            ;; (message "DATA %s" data)
                             (skerrick--process-server-response data)))))
 
 (defun skerrick-remove-eval-overlay ()
@@ -99,17 +98,28 @@
       (setq skerrick--eval-overlay (make-overlay (point) (point) (current-buffer))))
     (skerrick--send-eval-req selected-code (buffer-file-name))))
 
-;; (request
-;;   "http://localhost:4321/eval"
-;;   :type "POST"
-;;   :data (json-encode '(("code" . "throw new Error(\"blah\")") ("modulePath" . "/module-a.js")))
-;;   :parser 'json-read
-;;   :encoding 'utf-8
-;;   :headers '(("Content-Type" . "application/json"))
-;;   :success (cl-function (lambda (&key data &allow-other-keys)
-;;                           (setq temp-var data))))
+(defun skerrick-install-or-upgrade ()
+  (interactive)
+  (async-shell-command "npm install -g skerrick"))
 
-;; temp-var
+(defvar skerrick-process nil)
+(defun skerrick-start-server ()
+  (interactive)
+  (if (and skerrick-process (process-live-p skerrick-process))
+    (message "Skerrick server already running")
+    (progn
+      (setq skerrick-process (start-process "skerrick-server" "*skerrick-server*"
+                              "skerrick" (prin1-to-string skerrick--server-port) (buffer-file-name)))
+      (message "Started skerrick server on %s" skerrick--server-port))))
+
+(defun skerrick-stop-server ()
+  (interactive)
+  (if (and skerrick-process (process-live-p skerrick-process))
+    (progn
+      (stop-process skerrick-process)
+      (setq skerrick-process nil)
+      (message "Stopped skerrick server"))
+    (message "No running skerrick server")))
 
 (provide 'skerrick)
 ;;; skerrick.el ends here

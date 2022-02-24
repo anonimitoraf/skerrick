@@ -9,7 +9,7 @@
 ;; Version: 0.0.1
 ;; Keywords: languages javascript js repl repl-driven
 ;; Homepage: https://github.com/anonimitoraf/skerrick
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "27.1") (request "0.3.2"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;

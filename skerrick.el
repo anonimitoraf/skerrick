@@ -38,6 +38,7 @@
 (defvar skerrick--server-url "http://localhost:4321")
 (defvar skerrick--process-buffer "*skerrick-stdout-stderr*")
 (defvar skerrick--eval-overlay nil)
+(defvar skerrick--remove-eval-overlay-on-next-cmd? nil)
 
 (defun skerrick--propertize-error (error) (propertize error 'face '(:foreground "red")))
 
@@ -56,9 +57,8 @@
           (result (alist-get 'result response)))
     (when stdout (skerrick--append-to-process-buffer stdout))
     (when stderr (skerrick--append-to-process-buffer (skerrick--propertize-error stderr)))
-    (skerrick--display-overlay (format " => %s " (if result result "undefined")) 'skerrick-result-overlay-face)))
-
-(defvar skerrick--initial? t)
+    (skerrick--display-overlay (format " => %s " (if result (json-encode result) "undefined")) 'skerrick-result-overlay-face)
+    (setq skerrick--remove-eval-overlay-on-next-cmd? t)))
 
 (defun skerrick--send-eval-req (code module-path)
   "Send CODE and MODULE-PATH to sever."
@@ -66,26 +66,29 @@
     (concat skerrick--server-url "/eval")
     :type "POST"
     :data (json-encode `(("code" . ,code)
-                         ("modulePath" . ,module-path)
-                         ("initial" . ,skerrick--initial?)))
+                          ("modulePath" . ,module-path)))
     :parser 'json-read
     :encoding 'utf-8
     :headers '(("Content-Type" . "application/json"))
     :success (cl-function (lambda (&key data &allow-other-keys)
                             ;; (message "DATA %s" data)
-                            (skerrick--process-server-response data))))
-  (setq skerrick--initial? nil))
+                            (skerrick--process-server-response data)))))
 
 (defun skerrick-remove-eval-overlay ()
   (interactive)
-  (when (overlayp skerrick--eval-overlay) (delete-overlay skerrick--eval-overlay)))
+  (when (overlayp skerrick--eval-overlay)
+    (delete-overlay skerrick--eval-overlay)
+    (setq skerrick--remove-eval-overlay-on-next-cmd? nil)))
+
+(add-hook 'post-command-hook (lambda () (when skerrick--remove-eval-overlay-on-next-cmd?
+                                     (skerrick-remove-eval-overlay))))
 
 (defun skerrick-eval-region ()
   "Evaluate the selected JS code."
   (interactive)
   (let* ((beg (region-beginning))
-         (end (region-end))
-         (selected-code (format "%s" (buffer-substring-no-properties beg end))))
+          (end (region-end))
+          (selected-code (format "%s" (buffer-substring-no-properties beg end))))
     ;; Clean up previous eval overlay
     (skerrick-remove-eval-overlay)
     (save-excursion

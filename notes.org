@@ -1,41 +1,42 @@
 #+TITLE: Notes
 
 * Test Suite
-** [ ] Make it easy to visually map the input lines of code -> output lines
+- [ ] Make it easy to visually map the input lines of code -> output lines
 * TODOs
-** [X] Fix exports: bindings being repeated N! times
-CLOSED: [2022-02-09 Wed 09:07]
-** [X] Support importing of built-ins (e.g. ='fs'=)
-** [X] Auto-evaluation of dependencies (e.g. starting from =index.js=)
-*** [X] Test if cyclic deps are supported
-*** The problem here is that the Skerrick needs to be able to access all the files of the project.
-- Either, Skerrick is started as part of the project OR
-- The editor sends Skerrick the files it needs to evaluate - 2 way comms needed
-For now, I'll support the former since it seems easier to do. Actually, the latter might not be feasible. Imagine having to send MBs of node_modules files across the wire!
-** [ ] Support commonjs modules [5/17]
-*** [X] module.exports = { x: 1 }
-*** [X] module.exports.x = 'something'
-*** [X] exports.x = 'something'
-*** [X] require('ns')
-*** [ ] require.resolve
-*** [ ] require.cache
-*** [ ] require.main
-*** [ ] module.children
-*** [ ] module.filename
-*** [ ] module.id
-*** [ ] module.isPreloading
-*** [ ] module.loaded
-*** [ ] module.path
-*** [ ] module.paths
-*** [ ] module.require
-*** [X] Auto-eval of cjs stuff. At the moment only es6 ones get auto-eval
-*** [ ] Clean up of exports. At the moment, intermediate values stay in the namespaces
-** [ ] Stack traces
-** [ ] Support dynamic imports
-** [ ] Check behavior of native libs - is special consideration needed?
-** [ ] Typescript support
+- [X] Fix exports: bindings being repeated N! times
+- [X] Support importing of built-ins (e.g. ='fs'=)
+- [X] Auto-evaluation of dependencies (e.g. starting from =index.js=)
+  - [X] Test if cyclic deps are supported
+  - The problem here is that the Skerrick needs to be able to access all the files of the project.
+    - Either, Skerrick is started as part of the project OR
+    - The editor sends Skerrick the files it needs to evaluate - 2 way comms needed
+    For now, I'll support the former since it seems easier to do. Actually, the latter might not be feasible. Imagine having to send MBs of node_modules files across the wire!
+- [-] Support commonjs modules [5/17]
+  - [X] module.exports = { x: 1 }
+  - [X] module.exports.x = 'something'
+  - [X] exports.x = 'something'
+  - [X] require('ns')
+  - [ ] require.resolve
+  - [ ] require.cache
+  - [ ] require.main
+  - [ ] module.children
+  - [ ] module.filename
+  - [ ] module.id
+  - [ ] module.isPreloading
+  - [ ] module.loaded
+  - [ ] module.path
+  - [ ] module.paths
+  - [ ] module.require
+  - [X] Auto-eval of cjs stuff. At the moment only es6 ones get auto-eval
+  - [ ] Clean up of exports. At the moment, intermediate values stay in the namespaces
+- [ ] Stack traces
+- [ ] Support dynamic imports
+- [ ] Check behavior of native libs - is special consideration needed?
+- [ ] Typescript support
 * TODOs - Emacs
-** [ ] JSON outputs are showing up as plists
-** [ ] Overlays should disappear on movement
+- [X] JSON outputs are showing up as plists
+- [X] Overlays should disappear on movement
+- [ ] Support result truncation
+- [ ] Focus stdout/stderr buffer on eval, when needed
 * Document caveats
 - Normal execution: error when undefined identifier vs Skerrick: No error

@@ -28,7 +28,7 @@ Inspired by (check them out!):
 
 ### Installation
 * `skerrick` isn't in MELPA yet. You can clone this repo and evaluate `skerrick.el` in the meantime or use `straight`. For example, if you use Doom:
-```sh
+```elisp
 (package! skerrick
   :recipe (:host github :repo "anonimitoraf/skerrick"))
 ```
@@ -48,4 +48,7 @@ Inspired by (check them out!):
 | `skerrick-eval-region` | Evaluates the selected region. Shows the eval results as an overlay. Stdout/stderr get written to the buffer `*skerrick-stdout-stderr*`. |
 
 ## VSCode
+TODO
+
+## Write a plug-in for your editor/IDE!
 TODO

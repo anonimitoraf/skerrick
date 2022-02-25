@@ -38,5 +38,10 @@
 - [X] Overlays should disappear on movement
 - [ ] Support result truncation
 - [ ] Focus stdout/stderr buffer on eval, when needed
+- [ ] REPL input buffer (similar to cider-eval)
+* TODOs - VSCode
+- [ ] Support result truncation
+- [ ] Focus stdout/stderr buffer on eval, when needed
+- [ ] REPL input buffer (similar to cider-eval)
 * Document caveats
 - Normal execution: error when undefined identifier vs Skerrick: No error

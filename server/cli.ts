@@ -6,4 +6,4 @@ const [,, port, entrypoint, evalImports] = process.argv;
 console.log('--- Port:', port);
 console.log('--- Entry point', entrypoint);
 console.log('--- Eval imports?', evalImports === 'true');
-serve(parseInt(port), entrypoint, evalImports);
+serve(parseInt(port), entrypoint, evalImports === 'true');

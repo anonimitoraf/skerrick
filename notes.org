@@ -2,7 +2,7 @@
 
 * Test Suite
 - [ ] Make it easy to visually map the input lines of code -> output lines
-* TODOs
+* TODOs - Server
 - [X] Fix exports: bindings being repeated N! times
 - [X] Support importing of built-ins (e.g. ='fs'=)
 - [X] Auto-evaluation of dependencies (e.g. starting from =index.js=)

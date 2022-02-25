@@ -39,6 +39,7 @@ Inspired by (check them out!):
 |:--|:--|:--|
 | `skerrick-server-port` | Port to run the `skerrick` server on | 4321 |
 | `skerrick-result-overlay-face` | Face used to display evaluation results | |
+| `skerrick-result-overlay-char-count-trunc` | Results with char count longer than this are truncated | 120 |
 
 ### Usage
 | Command | Desc |

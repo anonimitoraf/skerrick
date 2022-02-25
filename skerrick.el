@@ -36,6 +36,9 @@
   :group 'skerrick)
 
 (defvar skerrick-server-port 4321)
+(defvar skerrick-result-overlay-char-count-trunc 120
+  "If the evaluation result is longer than this, then it's truncated.")
+(defvar skerrick--result-buffer "*skerrick-result*")
 (defvar skerrick--process-buffer "*skerrick-stdout-stderr*")
 (defvar skerrick--eval-overlay nil)
 (defvar skerrick--remove-eval-overlay-on-next-cmd? nil)
@@ -55,14 +58,27 @@
     (goto-char (point-max)) ; Append to buffer
     (insert value ?\n)))
 
+(defun skerrick--append-to-result-buffer (value)
+  "Append VALUE to designated buffer."
+  (with-current-buffer (get-buffer-create skerrick--result-buffer)
+    (goto-char (point-max)) ; Append to buffer
+    (insert value ?\n)))
+
 (defun skerrick--process-server-response (response)
   "Process RESPONSE from skerrick server."
   (let* ((stdout (alist-get 'stdout response))
           (stderr (alist-get 'stderr response))
-          (result (alist-get 'result response)))
+          (result (alist-get 'result response))
+          (result-str (if result (json-encode result) "undefined")))
     (when stdout (skerrick--append-to-process-buffer stdout))
     (when stderr (skerrick--append-to-process-buffer (skerrick--propertize-error stderr)))
-    (skerrick--display-overlay (format " => %s " (if result (json-encode result) "undefined")) 'skerrick-result-overlay-face)
+    (skerrick--append-to-result-buffer result-str)
+    (skerrick--display-overlay (format " => %s " (if (length> result-str skerrick-result-overlay-char-count-trunc)
+                                                   (format "%s (result truncated, see buffer %s)"
+                                                     (truncate-string-to-width result-str skerrick-result-overlay-char-count-trunc nil nil t)
+                                                     skerrick--result-buffer)
+                                                   result-str))
+      'skerrick-result-overlay-face)
     (setq skerrick--remove-eval-overlay-on-next-cmd? t)))
 
 (defun skerrick--send-eval-req (code module-path)

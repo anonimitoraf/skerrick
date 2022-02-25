@@ -36,8 +36,7 @@
 * TODOs - Emacs
 - [X] JSON outputs are showing up as plists
 - [X] Overlays should disappear on movement
-- [ ] Support result truncation
-- [ ] Focus stdout/stderr buffer on eval, when needed
+- [X] Support result truncation
 - [ ] REPL input buffer (similar to cider-eval)
 * TODOs - VSCode
 - [ ] Support result truncation

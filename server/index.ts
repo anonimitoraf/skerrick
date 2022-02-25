@@ -34,7 +34,7 @@ export function serve(port = 4321, entryFilePath?: string) {
     }
 
     try {
-      const result = evaluate(modulePath, code, false, true);
+      const result = evaluate(modulePath, code, true, true);
       res.status(200).send({ result, stdout, stderr });
     } catch (e) {
       res.status(200).send({ stderr: removeEscapeCodes(e.stack || e.message) });

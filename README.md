@@ -21,7 +21,7 @@ Inspired by (check them out!):
 ## Emacs
 
 ### Demos
-* [Basic usage](https://asciinema.org/a/seKAsvrFuPc1nY7dJheLQTBep)
+* [Basic usage](/demos/basic.webm)
 
 ### Requirements
 * `node`/`npm` installed and accessible by Emacs

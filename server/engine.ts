@@ -267,7 +267,7 @@ function transformer(evalImports?: boolean, debug?: boolean) {
           // console.log('BINDING:', bindingKey, 'path node type:', binding.path.type);
           // NOTE: Imports are not bound/stored as values within the namespace. They are instead
           // resolved dynamically when evaluating code.
-          if (binding.path.type === 'ImportSpecifier') {
+          if (binding.path.type === 'ImportSpecifier' || binding.path.type === 'ImportDefaultSpecifier') {
             continue;
           }
           const registerValueExpr = t.callExpression(

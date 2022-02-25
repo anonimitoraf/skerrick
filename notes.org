@@ -29,9 +29,9 @@
   - [ ] module.require
   - [X] Auto-eval of cjs stuff. At the moment only es6 ones get auto-eval
   - [ ] Clean up of exports. At the moment, intermediate values stay in the namespaces
-- [ ] Stack traces
-- [ ] Support dynamic imports
+- [X] Support dynamic imports
 - [ ] Check behavior of native libs - is special consideration needed?
+- [ ] Stack traces
 - [ ] Typescript support
 * TODOs - Emacs
 - [X] JSON outputs are showing up as plists

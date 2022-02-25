@@ -47,6 +47,16 @@ interface NamespaceImport {
 type NamespaceImportsByLocal = Map<NamespaceImport['local'], NamespaceImport>;
 const namespaceImports = new Map<Namespace, NamespaceImportsByLocal>();
 
+function requireCustom(importingNamespace: string, importedNamespace: string, evalImports?: boolean, debug?: boolean) {
+  const requiredNsNormalized = normalizeImportPath(importingNamespace, importedNamespace);
+  if (evalImports) {
+    evaluate(requiredNsNormalized, fs.readFileSync(requiredNsNormalized, { encoding: 'utf8' }), evalImports, debug);
+  }
+  const defaultExport = valueExports.get(requiredNsNormalized)?.get(symbols.defaultExport);
+  const result = defaultExport && namespaces.get(requiredNsNormalized)?.get(defaultExport.local);
+  return result;
+}
+
 export function evaluate(namespace: string, code: string, evalImports?: boolean, debug?: boolean) {
   const codeTransformed = transform(namespace, code, evalImports, debug);
 
@@ -83,17 +93,6 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
       }
   }
 
-  // TODO Transform `requires` => `await require`
-  const requireStub = function (requiredNs: string) {
-    const requiredNsNormalized = normalizeImportPath(namespace, requiredNs);
-    const defaultExport = valueExports.get(requiredNsNormalized)?.get(symbols.defaultExport);
-    const result = defaultExport && namespaces.get(requiredNsNormalized)?.get(defaultExport.local);
-    if (evalImports) {
-      evaluate(requiredNsNormalized, fs.readFileSync(requiredNsNormalized, { encoding: 'utf8' }), evalImports, debug);
-    }
-    return result;
-  }
-
   const exportsStub = new Proxy({}, {
     set(obj, prop, value) {
       const localKeyOfDefaultExport = valueExports.get(namespace)?.get(symbols.defaultExport)?.local;
@@ -112,11 +111,12 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
     get(target, prop, receiver) {
       // TODO Find out if `exports.default` needs to be supported
       const exportsOfNs = valueExports.get(namespace)?.values() || [];
-      console.log('exports of ns', exportsOfNs);
       const exportValue = [...exportsOfNs].find(e => e.local === prop);
       return exportValue;
     }
   })
+
+  const requireStub = importedNamespace => requireCustom(namespace, importedNamespace, evalImports, debug);
 
   const moduleStub = new Proxy({
     exports: exportsStub
@@ -180,8 +180,6 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
 function constructNamespaceExport(namespace: string) {
   const values: NamespaceValuesByKey = namespaces.get(namespace) || new Map();
   const exports: ExportsByExported = valueExports.get(namespace) || new Map();
-  console.log('values', values);
-  console.log('exports', exports);
   const nsExport = _([...exports.values()])
     .map(({ exported, local }) => {
       const v = values.get(local);
@@ -193,7 +191,6 @@ function constructNamespaceExport(namespace: string) {
     .filter(x => !!x)
     .fromPairs()
     .value();
-  console.log('ns export', nsExport);
   return nsExport;
 }
 
@@ -237,6 +234,19 @@ function registerValueImport(
   valueImports.set(importingNamespace, imports);
   imports.set(local, { imported, local, importedNamespace: absoluteImportedNamespace, isBuiltIn });
   return local;
+}
+
+function dynamicImport(
+  importingNamespace: string,
+  importedNamespace: string,
+  evalImports?: boolean,
+  debug?: boolean
+) {
+  const importedNamespaceNormalized = normalizeImportPath(importingNamespace, importedNamespace);
+  if (evalImports) {
+    evaluate(importedNamespaceNormalized, fs.readFileSync(importedNamespaceNormalized, { encoding: 'utf8' }), evalImports, debug);
+  }
+  return Promise.resolve(constructNamespaceExport(importedNamespaceNormalized));
 }
 
 export function transform(namespace: string, code: string, evalImports?: boolean, debug?: boolean) {
@@ -292,6 +302,21 @@ function transformer(evalImports?: boolean, debug?: boolean) {
             binding.path.insertAfter(registerValueExpr);
           }
         }
+      },
+      CallExpression(path: NodePath<t.CallExpression>, state: PluginPass) {
+        if (path.node.callee.type !== 'Import') {
+          return;
+        }
+
+        const fileName = extractFileName(state);
+        const dynamicImportExpr = t.callExpression(
+          t.identifier(dynamicImport.name), [
+          t.stringLiteral(fileName),
+          path.node.arguments[0],
+          t.booleanLiteral(!!evalImports),
+          t.booleanLiteral(!!debug)
+        ]);
+        path.replaceWith(dynamicImportExpr);
       },
       ExpressionStatement(path: NodePath<t.ExpressionStatement>, state: PluginPass) {
         if (path.scope.block.type !== 'Program') {

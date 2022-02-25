@@ -21,7 +21,7 @@ Inspired by (check them out!):
 ## Emacs
 
 ### Demos
-* [Basic usage](/demos/basic.webm)
+* ![Basic usage](/demos/basic.gif)
 
 ### Requirements
 * `node`/`npm` installed and accessible by Emacs

@@ -21,7 +21,8 @@ Inspired by (check them out!):
 ## Emacs
 
 ### Demos
-* ![Basic usage](/demos/basic.gif)
+![Basic usage](/demos/basic.gif)
+![Module support](/demos/modules.gif)
 
 ### Requirements
 * `node`/`npm` installed and accessible by Emacs

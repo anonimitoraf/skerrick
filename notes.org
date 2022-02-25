@@ -30,7 +30,7 @@
   - [X] Auto-eval of cjs stuff. At the moment only es6 ones get auto-eval
   - [ ] Clean up of exports. At the moment, intermediate values stay in the namespaces
 - [X] Support dynamic imports
-- [ ] Check behavior of native libs - is special consideration needed?
+- [X] Check behavior of native libs - is special consideration needed?
 - [ ] Stack traces
 - [ ] Typescript support
 * TODOs - Emacs

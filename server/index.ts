@@ -7,7 +7,7 @@ import captureConsole from 'capture-console';
 import { evaluate } from './engine';
 
 /** Instantiates a Skerrick server. Returns a fn that stops the server. */
-export function serve(port = 4321, entryFilePath?: string) {
+export function serve(port = 4321, entryFilePath?: string, evalImports?: boolean) {
   if (entryFilePath) {
     if (!path.isAbsolute(entryFilePath)) {
       throw Error(`Entry file path needs to be absolute. Got ${entryFilePath}`);
@@ -34,7 +34,7 @@ export function serve(port = 4321, entryFilePath?: string) {
     }
 
     try {
-      const result = evaluate(modulePath, code, true, true);
+      const result = evaluate(modulePath, code, evalImports, true);
       res.status(200).send({ result, stdout, stderr });
     } catch (e) {
       res.status(200).send({ stderr: removeEscapeCodes(e.stack || e.message) });

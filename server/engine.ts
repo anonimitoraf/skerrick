@@ -49,6 +49,11 @@ const namespaceImports = new Map<Namespace, NamespaceImportsByLocal>();
 
 function requireCustom(importingNamespace: string, importedNamespace: string, evalImports?: boolean, debug?: boolean) {
   const requiredNsNormalized = normalizeImportPath(importingNamespace, importedNamespace);
+  const isBuiltIn = !fsPath.isAbsolute(importedNamespace);
+  if (isBuiltIn) {
+    return createRequire(importingNamespace)(requiredNsNormalized);
+  }
+
   if (evalImports) {
     evaluate(requiredNsNormalized, fs.readFileSync(requiredNsNormalized, { encoding: 'utf8' }), evalImports, debug);
   }
@@ -243,6 +248,11 @@ function dynamicImport(
   debug?: boolean
 ) {
   const importedNamespaceNormalized = normalizeImportPath(importingNamespace, importedNamespace);
+  const isBuiltIn = !fsPath.isAbsolute(importedNamespaceNormalized);
+  if (isBuiltIn) {
+    return Promise.resolve(createRequire(importingNamespace)(importedNamespaceNormalized));
+  }
+
   if (evalImports) {
     evaluate(importedNamespaceNormalized, fs.readFileSync(importedNamespaceNormalized, { encoding: 'utf8' }), evalImports, debug);
   }

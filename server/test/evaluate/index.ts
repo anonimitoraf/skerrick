@@ -15,7 +15,8 @@ const dirs = isScratch
     'default-exports-and-imports',
     'imports-built-ins',
     'commonjs',
-    'dynamic-imports'
+    'dynamic-imports',
+    'native-addons'
   ]
 
 const delimiter = "// ---";

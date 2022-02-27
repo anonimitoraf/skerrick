@@ -31,16 +31,17 @@
   - [ ] Clean up of exports. At the moment, intermediate values stay in the namespaces
 - [X] Support dynamic imports
 - [X] Check behavior of native libs - is special consideration needed?
-- [ ] Stack traces
 - [ ] Typescript support
+- [ ] Stack traces
 * TODOs - Emacs
 - [X] JSON outputs are showing up as plists
 - [X] Overlays should disappear on movement
 - [X] Support result truncation
-- [ ] REPL input buffer (similar to cider-eval)
-* TODOs - VSCode
-- [ ] Support result truncation
+- [ ] Create a minor-mode
 - [ ] Focus stdout/stderr buffer on eval, when needed
-- [ ] REPL input buffer (similar to cider-eval)
+* TODOs - VSCode
+- [X] Command to start/stop server
+- [X] Support result truncation
+- [X] Focus stdout/stderr buffer on eval, when needed
 * Document caveats
 - Normal execution: error when undefined identifier vs Skerrick: No error

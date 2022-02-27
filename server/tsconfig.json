@@ -21,9 +21,10 @@
     "noUncheckedIndexedAccess": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "strict": false
+    "strict": false,
+    "declaration": true
   },
-  "include": ["./**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": [
     "node_modules/**/*"
   ]

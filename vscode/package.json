@@ -3,6 +3,9 @@
   "displayName": "skerrick",
   "description": "REPL-driven development for Javascript",
   "version": "0.0.1",
+  "repository": {
+    "url": "https://github.com/anonimitoraf/skerrick"
+  },
   "engines": {
     "vscode": "^1.64.0"
   },
@@ -10,16 +13,41 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:skerrick.evalSelected"
+    "onCommand:skerrick.evalSelected",
+    "onCommand:skerrick.startServer",
+    "onCommand:skerrick.stopServer"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "skerrick.evalSelected",
-        "title": "SKERRICK: Evaluate selected code"
+        "title": "Skerrick: Evaluate selected code"
+      },
+      {
+        "command": "skerrick.startServer",
+        "title": "Skerrick: Start server. NOTE: This will evaluate the current file"
+      },
+      {
+        "command": "skerrick.stopServer",
+        "title": "Skerrick: Stop server"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Skerrick",
+      "properties": {
+        "skerrick.resultOverlayCharCountTrunc": {
+          "type": "number",
+          "default": 120,
+          "description": "Evaluation results longer than this, will be shown as overlays with truncated contents. Full results can be found in the Ouput > Skerrick panel"
+        },
+        "skerrick.serverPort": {
+          "type": "number",
+          "default": 4321,
+          "description": "Port to run the skerrick server on"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -44,6 +72,7 @@
   },
   "dependencies": {
     "axios": "^0.25.0",
-    "chalk": "^4.1.2"
+    "chalk": "^4.1.2",
+    "skerrick": "^0.0.7"
   }
 }

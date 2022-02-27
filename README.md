@@ -17,12 +17,19 @@ I WOULD APPRECIATE IT IF YOU REPORT ANY BUGS/ISSUES YOU FIND. MAYBE EVEN CONTRIB
 Inspired by (check them out!):
 * SLIME: The Superior Lisp Interaction Mode for Emacs
 * CIDER: The Clojure(Script) Interactive Development Environment that Rocks!
+* Calva: integrated REPL powered environment for enjoyable and productive Clojure and ClojureScript development in Visual Studio Code
+
+(but for Javascript!)
+
+## VSCode
+
+![Documentation](/vscode/README.md)
 
 ## Emacs
 
 ### Demos
-![Basic usage](/demos/basic.gif)
-![Module support](/demos/modules.gif)
+![Basic usage](/demos/emacs/basic.gif)
+![Module support](/demos/emacs/modules.gif)
 
 ### Requirements
 * `node`/`npm` installed and accessible by Emacs
@@ -47,10 +54,7 @@ Inspired by (check them out!):
 | `skerrick-install-or-upgrade-server-binary` | Needs to be run on the very first install of skerrick. Or when you want to upgrade. |
 | `skerrick-start-server` | Starts the server. Note that your current buffer will be evaluated, so you probably want to run this command while being on your program's entry point file. |
 | `skerrick-stop-server` | Stops the server. |
-| `skerrick-eval-region` | Evaluates the selected region. Shows the eval results as an overlay. Stdout/stderr get written to the buffer `*skerrick-stdout-stderr*`. |
-
-## VSCode
-TODO
+| `skerrick-eval-region` | Evaluates the selected region. Shows the eval result as an overlay. Stdout/stderr get written to the buffer `*skerrick-stdout-stderr*`. |
 
 ## Write a plug-in for your editor/IDE!
 TODO

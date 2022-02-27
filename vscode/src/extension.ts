@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { DecorationOptions, Range, TextEditor, TextEditorSelectionChangeKind } from 'vscode';
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
+import * as skerrickServer from 'skerrick';
 
 interface EvalResult {
   result: any;
@@ -8,24 +9,27 @@ interface EvalResult {
   stderr: string;
 }
 
-const http = axios.create({});
+let http: AxiosInstance;
 
 const outputChannel = vscode.window.createOutputChannel('Skerrick');
 
 const config = vscode.workspace.getConfiguration('skerrick');
-const overlayTextMaxLength = config.get('resultMaxLengthBeforeTruncation') || 50;
+const configResultOverlayCharCountTrunc: number = config.get('resultOverlayCharCountTrunc') || 120;
+const configserverPort: number = config.get('serverPort') || 4321;
 
 let evalOverlay: DecorationOptions | undefined = undefined;
 const overlayType = vscode.window.createTextEditorDecorationType({
   after: {
     margin: "0 0 0 0.5rem"
   },
-  dark: { after: { border: "1px solid white" } },
-  light: { after: { border: "1px solid black" } }
+  dark: { after: { border: "0.5px solid #808080" } },
+  light: { after: { border: "0.5px solid #c5c5c5" } }
 });
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('Skerrick activated');
+
+  http = axios.create({ baseURL: 'http://localhost:' + configserverPort });
 
   // Hide overlays on keyboard movement otherwise, the overlay moves too
   vscode.window.onDidChangeTextEditorSelection(event => {
@@ -38,14 +42,17 @@ export function activate(context: vscode.ExtensionContext) {
     }
   })
 
-  const command = vscode.commands.registerCommand('skerrick.evalSelected', async () => {
+  const evalCommand = vscode.commands.registerCommand('skerrick.evalSelected', async () => {
     try {
       await evalCode()
     } catch (e) {
       vscode.window.showErrorMessage(`Failed to evaluate code: ${e}`);
     }
   });
-  context.subscriptions.push(command);
+  const startServerCommand = vscode.commands.registerCommand('skerrick.startServer', startServer);
+  const stopServerCommand = vscode.commands.registerCommand('skerrick.stopServer', stopServer);
+
+  [evalCommand, startServerCommand, stopServerCommand].forEach(cmd => context.subscriptions.push(cmd));
 }
 
 async function evalCode () {
@@ -57,14 +64,26 @@ async function evalCode () {
   const code = editor.document.getText(selection);
   const filePath = editor.document.fileName;
 
-  outputChannel.appendLine(`[LOG] Evaluating code: ${code}`);
+  outputChannel.appendLine(`[EVAL] ${code}`);
   const { result, stdout, stderr } = await http.post<EvalResult>('/eval', { code, modulePath: filePath }).then(r => r.data);
-  outputChannel.appendLine(`[LOG] Result: ${result}`);
-  const overlayText = `=> ${result === undefined ? 'undefined' : result.toString()}`;
+  outputChannel.appendLine(`[RESULT] ${result}`);
+
+  let overlayText: string;
+  if (result === undefined) {
+    overlayText = '=> undefined';
+  } else if (result.toString().length > configResultOverlayCharCountTrunc) {
+    overlayText = '=> ' + result.toString().substring(0, configResultOverlayCharCountTrunc) + '... (result truncated, see Output > Skerrick  panel)';
+    outputChannel.show(true);
+  } else {
+    overlayText = '=> ' + result.toString();
+  }
 
   if (stdout) outputChannel.appendLine(`[STDOUT] ${stdout}`);
   if (stderr) outputChannel.appendLine(`[STDERR] ${stderr}`);
-  outputChannel.show(true);
+  // TODO Maybe make this configurable
+  if (stdout?.trim() || stderr?.trim()) {
+    outputChannel.show(true);
+  }
 
   if (!evalOverlay) {
     evalOverlay = makeOverlay(selection, overlayText);
@@ -91,9 +110,32 @@ function hideOverlays(editor: TextEditor) {
   editor.setDecorations(overlayType, []);
 }
 
-// this method is called when your extension is deactivated
-export function deactivate() { }
+let serverInstance: (() => void) | undefined;
 
 function startServer () {
+  if (serverInstance) {
+    outputChannel.appendLine(`[NOTICE]: Attempted to start skerrick server but it's already running. No op...`);
+  }
 
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) return; // No open text editor
+
+  const filePath = editor.document.fileName;
+  serverInstance = skerrickServer.serve(configserverPort, filePath, true);
+  outputChannel.appendLine(`[NOTICE]: Started skerrick server on port ${configserverPort}`);
+}
+
+function stopServer() {
+  if (!serverInstance) {
+    outputChannel.appendLine(`[NOTICE]: Attempted to stop skerrick server but there is no running instance. No op...`);
+  } else {
+    serverInstance();
+    serverInstance = undefined;
+    outputChannel.appendLine(`[NOTICE]: Stopped skerrick server on port ${configserverPort}`);
+  }
+}
+
+// this method is called when your extension is deactivated
+export function deactivate() {
+  stopServer();
 }

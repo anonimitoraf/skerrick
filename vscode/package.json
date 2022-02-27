@@ -2,13 +2,15 @@
   "name": "skerrick",
   "displayName": "skerrick",
   "description": "REPL-driven development for Javascript",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "repository": {
     "url": "https://github.com/anonimitoraf/skerrick"
   },
+  "license": "GPL-3.0",
   "engines": {
     "vscode": "^1.64.0"
   },
+  "publisher": "anonimitoraf",
   "categories": [
     "Other"
   ],

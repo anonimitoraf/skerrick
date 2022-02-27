@@ -14,7 +14,7 @@
 ;; This file is not part of GNU Emacs.
 ;;
 ;;; Commentary:
-;; REPL-driven development for Javascript
+;; REPL-driven development for NodeJS
 ;;
 ;;  Description
 ;;

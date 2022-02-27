@@ -1,4 +1,4 @@
-REPL-driven development for Javascript!
+REPL-driven development for NodeJS!
 
 See https://github.com/anonimitoraf/skerrick for more info
 
@@ -12,7 +12,7 @@ Check it out: https://marketplace.visualstudio.com/items?itemName=anonimitoraf.s
 
   Is this like hot-reloading?  
   Yes, but (arguably) even better, because you choose which code to evaluate! With hot-reloading, your code gets re-evaluated for every change you make, whether you want to or not.
-* Evaluate code and see the results inline - A feedback loop is faster than ever!
+* Evaluate code and see the results inline - A feedback loop that is faster than ever!
 
 # Demos
 

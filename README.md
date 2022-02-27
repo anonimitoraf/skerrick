@@ -10,7 +10,7 @@
 
 ## Why should I care?
 
-* REPL-driven development for Javascript
+* REPL-driven development for NodeJS
   * Programming in tiny increments - Apply patches to your running program without having to restart it
   * [Tell me more!](https://purelyfunctional.tv/lesson/what-is-repl-driven-development/)
 
@@ -18,8 +18,6 @@ Inspired by (check them out!):
 * SLIME: The Superior Lisp Interaction Mode for Emacs
 * CIDER: The Clojure(Script) Interactive Development Environment that Rocks!
 * Calva: integrated REPL powered environment for enjoyable and productive Clojure and ClojureScript development in Visual Studio Code
-
-(but for Javascript!)
 
 ## VSCode
 

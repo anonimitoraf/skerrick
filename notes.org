@@ -43,5 +43,6 @@
 - [X] Command to start/stop server
 - [X] Support result truncation
 - [X] Focus stdout/stderr buffer on eval, when needed
+- [ ] Icon
 * Document caveats
 - Normal execution: error when undefined identifier vs Skerrick: No error

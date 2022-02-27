@@ -2,6 +2,10 @@ REPL-driven development for Javascript!
 
 See https://github.com/anonimitoraf/skerrick for more info
 
+# Installation
+
+Check it out: https://marketplace.visualstudio.com/items?itemName=anonimitoraf.skerrick
+
 # Features
 
 * Make changes to your running program without having to restart it!  

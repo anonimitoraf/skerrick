@@ -2,7 +2,7 @@
   "name": "skerrick",
   "displayName": "Skerrick",
   "description": "REPL-driven development for Javascript",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "repository": {
     "url": "https://github.com/anonimitoraf/skerrick"
   },

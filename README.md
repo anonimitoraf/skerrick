@@ -4,9 +4,9 @@
 >   the smallest bit.  
 >   _"there's not a skerrick of food in the house"_
 
-## :warning: IMPORTANT :warning:
-THIS PROJECT IS IN ALPHA STATE!
-I WOULD APPRECIATE IT IF YOU REPORT ANY BUGS/ISSUES YOU FIND. MAYBE EVEN CONTRIBUTE PATCHES/FIXES IF YOU HAVE THE TIME ;)
+## :warning: DISCLAIMERS :warning:
+* THIS PROJECT IS IN ALPHA STATE! I WOULD APPRECIATE IT IF YOU REPORT ANY BUGS/ISSUES YOU FIND. MAYBE EVEN CONTRIBUTE PATCHES/FIXES IF YOU HAVE THE TIME ;)
+* The code is currently very messy and not well-written. I just wanted to get a working prototype out of the door as quickly as I could. I will be improving the implementation over time. Feel free to give me suggestions if you have any!
 
 ## Why should I care?
 

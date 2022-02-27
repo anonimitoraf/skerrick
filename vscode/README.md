@@ -1,5 +1,3 @@
-# Skerrick
-
 REPL-driven development for Javascript!
 
 See https://github.com/anonimitoraf/skerrick for more info

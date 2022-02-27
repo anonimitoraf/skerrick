@@ -14,10 +14,10 @@ See https://github.com/anonimitoraf/skerrick for more info
 
 ## Demos
 
-Basic  
+#### Basic
 ![Basic usage](/demos/vscode/basic.gif)
 
-Module support  
+#### Module support
 ![Module support](/demos/vscode/modules.gif)
 
 ## Configuration

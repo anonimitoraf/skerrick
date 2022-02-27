@@ -23,12 +23,16 @@ Inspired by (check them out!):
 
 ## VSCode
 
-![Documentation](/vscode/README.md)
+:sparkles: [Documentation](/vscode/README.md) :sparkles:
 
 ## Emacs
 
 ### Demos
+
+#### Basic
 ![Basic usage](/demos/emacs/basic.gif)
+
+#### Module support
 ![Module support](/demos/emacs/modules.gif)
 
 ### Requirements

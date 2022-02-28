@@ -4,14 +4,14 @@
 >   the smallest bit.  
 >   _"there's not a skerrick of food in the house"_
 
-* REPL-driven development for NodeJS
+**REPL-driven development for NodeJS**
   * Programming in tiny increments - Apply patches to your running program without having to restart it
   * [Tell me more!](https://purelyfunctional.tv/lesson/what-is-repl-driven-development/)
 
 Inspired by (check them out!):
-* SLIME: The Superior Lisp Interaction Mode for Emacs
-* CIDER: The Clojure(Script) Interactive Development Environment that Rocks!
-* Calva: integrated REPL powered environment for enjoyable and productive Clojure and ClojureScript development in Visual Studio Code
+  * SLIME: The Superior Lisp Interaction Mode for Emacs
+  * CIDER: The Clojure(Script) Interactive Development Environment that Rocks!
+  * Calva: integrated REPL powered environment for enjoyable and productive Clojure and ClojureScript development in Visual Studio Code
 
 ## :warning: DISCLAIMERS :warning:
 * THIS PROJECT IS IN ALPHA STATE! I WOULD APPRECIATE IT IF YOU REPORT ANY BUGS/ISSUES YOU FIND. MAYBE EVEN CONTRIBUTE PATCHES/FIXES IF YOU HAVE THE TIME ;)

@@ -4,12 +4,6 @@
 >   the smallest bit.  
 >   _"there's not a skerrick of food in the house"_
 
-## :warning: DISCLAIMERS :warning:
-* THIS PROJECT IS IN ALPHA STATE! I WOULD APPRECIATE IT IF YOU REPORT ANY BUGS/ISSUES YOU FIND. MAYBE EVEN CONTRIBUTE PATCHES/FIXES IF YOU HAVE THE TIME ;)
-* The code is currently very messy and not well-written. I just wanted to get a working prototype out of the door as quickly as I could. I will be improving the implementation over time. Feel free to give me suggestions if you have any!
-
-## Why should I care?
-
 * REPL-driven development for NodeJS
   * Programming in tiny increments - Apply patches to your running program without having to restart it
   * [Tell me more!](https://purelyfunctional.tv/lesson/what-is-repl-driven-development/)
@@ -18,6 +12,10 @@ Inspired by (check them out!):
 * SLIME: The Superior Lisp Interaction Mode for Emacs
 * CIDER: The Clojure(Script) Interactive Development Environment that Rocks!
 * Calva: integrated REPL powered environment for enjoyable and productive Clojure and ClojureScript development in Visual Studio Code
+
+## :warning: DISCLAIMERS :warning:
+* THIS PROJECT IS IN ALPHA STATE! I WOULD APPRECIATE IT IF YOU REPORT ANY BUGS/ISSUES YOU FIND. MAYBE EVEN CONTRIBUTE PATCHES/FIXES IF YOU HAVE THE TIME ;)
+* The code is currently very messy and not well-written. I just wanted to get a working prototype out of the door as quickly as I could. I will be improving the implementation over time. Feel free to give me suggestions if you have any!
 
 ## VSCode
 
@@ -59,4 +57,17 @@ Inspired by (check them out!):
 | `skerrick-eval-region` | Evaluates the selected region. Shows the eval result as an overlay. Stdout/stderr get written to the buffer `*skerrick-stdout-stderr*`. |
 
 ## Write a plug-in for your editor/IDE!
-TODO
+* `npm install -g skerrick` - this installs the bin `skerrick`  
+
+  Invoked like so: `skerrick PORT ENTRYPOINT_FULL_FILE_PATH`
+
+* The REST protocol is as simple as it can be:
+  * POST to `/eval` payloads of shape:
+    ```json
+      {
+        "modulePath": "/full/path/to/file/of/code/to/eval",
+        "code": "const x = 42"
+      }
+    ```
+
+* :rocket: Tell me about your plug-in so I can add it to this README! :rocket:

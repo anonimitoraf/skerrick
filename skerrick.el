@@ -53,6 +53,7 @@
 (defvar skerrick--process-buffer "*skerrick-stdout-stderr*")
 (defvar skerrick--eval-overlay nil)
 (defvar skerrick--remove-eval-overlay-on-next-cmd? nil)
+(defvar skerrick--hooks-setup? nil)
 
 (defun skerrick--propertize-error (error)
   "Style ERROR msg."
@@ -112,13 +113,14 @@
     (delete-overlay skerrick--eval-overlay)
     (setq skerrick--remove-eval-overlay-on-next-cmd? nil)))
 
-(add-hook 'post-command-hook (lambda () (when skerrick--remove-eval-overlay-on-next-cmd?
-                                     (skerrick-remove-eval-overlay))))
-
 ;;;###autoload
 (defun skerrick-eval-region ()
   "Evaluate the selected JS code."
   (interactive)
+  (unless skerrick--hooks-setup?
+    (add-hook 'post-command-hook (lambda () (when skerrick--remove-eval-overlay-on-next-cmd?
+                                         (skerrick-remove-eval-overlay))))
+    (setq skerrick--hooks-setup? t))
   (let* ((beg (region-beginning))
           (end (region-end))
           (selected-code (format "%s" (buffer-substring-no-properties beg end))))

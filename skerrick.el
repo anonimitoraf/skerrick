@@ -84,7 +84,7 @@
     (when stdout (skerrick--append-to-process-buffer stdout))
     (when stderr (skerrick--append-to-process-buffer (skerrick--propertize-error stderr)))
     (skerrick--append-to-result-buffer result-str)
-    (skerrick--display-overlay (format " => %s " (if (length> result-str skerrick-result-overlay-char-count-trunc)
+    (skerrick--display-overlay (format " => %s " (if (> (length result-str) skerrick-result-overlay-char-count-trunc)
                                                    (format "%s (result truncated, see buffer %s)"
                                                      (truncate-string-to-width result-str skerrick-result-overlay-char-count-trunc nil nil t)
                                                      skerrick--result-buffer)

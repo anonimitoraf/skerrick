@@ -57,6 +57,9 @@ Inspired by (check them out!):
 | `skerrick-eval-region` | Evaluates the selected region. Shows the eval result as an overlay. Stdout/stderr get written to the buffer `*skerrick-stdout-stderr*`. |
 
 ## Write a plug-in for your editor/IDE!
+
+[![NPM](https://nodei.co/npm/<package>.png)](https://nodei.co/npm/<package>/)
+
 * `npm install -g skerrick` - this installs the bin `skerrick`  
 
   Invoked like so: `skerrick PORT ENTRYPOINT_FULL_FILE_PATH`
@@ -66,7 +69,15 @@ Inspired by (check them out!):
     ```json
       {
         "modulePath": "/full/path/to/file/of/code/to/eval",
-        "code": "const x = 42"
+        "code": "const x = 42; console.log(x); x + x;"
+      }
+    ```
+  * Response shape:
+    ```json
+      {
+        "result": "84",
+        "stdout": "42",
+        "stderr": ""
       }
     ```
 

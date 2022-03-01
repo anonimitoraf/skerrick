@@ -41,6 +41,37 @@ Inspired by (check them out!):
   :recipe (:host github :repo "anonimitoraf/skerrick"))
 ```
 
+Or, if you're using Quelpa:
+```
+(quelpa '(skerrick :repo "anonimitoraf/skerrick" :fetcher github))
+
+;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
+(unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
+  (skerrick-install-or-upgrade-server-binary))
+
+;; Should be run in a JS buffer; it is buffer specific.
+;; (skerrick-start-server)
+
+;; Now main function, entry point is:
+;; M-x skerrick-eval-region
+```
+
+It may also be helpful to provide a quick keyboard shortcut. E.g., `C-x C-e` evaluates ELisp, so let's mimic that for JS buffers:
+```
+;; Evaluate a region, if any is selected; otherwise evaluate the current line.
+(bind-key
+ "C-x C-e"  (lambda ()
+              (interactive)
+              (if (use-region-p)
+                  (skerrick-eval-region)
+                (beginning-of-line)
+                (set-mark-command nil)
+                (end-of-line)
+                (skerrick-eval-region)
+                (pop-mark)))
+ 'js-mode-map)
+```
+
 ### Configuration
 | Configuration | Desc | Default |
 |:--|:--|:--|

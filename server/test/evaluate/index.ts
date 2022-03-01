@@ -15,8 +15,9 @@ const dirs = isScratch
     'default-exports-and-imports',
     'imports-built-ins',
     'commonjs',
-    'dynamic-imports',
-    'native-addons'
+    'async',
+    'native-addons',
+    'dynamic-imports'
   ]
 
 const delimiter = "// ---";
@@ -36,6 +37,7 @@ const delimiter = "// ---";
 
     for (const [inputPath, outputPath] of inputAndOutputPaths) {
       const inputBlocksToEval = fs.readFileSync(inputPath, 'utf-8').split(delimiter);
+      fs.writeFileSync(outputPath, '');
       await Promise.all(inputBlocksToEval
         .map(code => {
           try {

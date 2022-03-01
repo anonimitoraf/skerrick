@@ -1,4 +1,5 @@
-import _, { values } from 'lodash';
+import vm from 'vm';
+import _ from 'lodash';
 import { v4 as uuid } from 'uuid';
 import { createRequire } from 'module';
 import fsPath from 'path';
@@ -165,21 +166,30 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
     console.log('ns for scope', nsForScope);
   }
 
-  return eval(`
-    with (cjsStubs) {
-      with (nsImportsForScope) {
-        with (nsForScope) {
-          (function () {
-            "use strict";
-            try {
-                ${codeTransformed}
-            } catch (e) {
-              console.error(e);
-            }
-          })();
+  const result = vm.runInNewContext(`
+  with (nsImportsForScope) {
+    with (nsForScope) {
+      (function () {
+        "use strict";
+        try {
+            ${codeTransformed}
+        } catch (e) {
+          console.error(e);
         }
-      }
-    }`);
+      })();
+    }
+  }`, vm.createContext({
+    ...global,
+    ...cjsStubs,
+    nsImportsForScope,
+    nsForScope,
+    registerValue,
+    registerValueExport,
+    registerValueImport,
+    registerDefaultValueExport,
+    dynamicImport,
+  }, { microtaskMode: undefined }));
+  return result;
 }
 
 function constructNamespaceExport(namespace: string) {

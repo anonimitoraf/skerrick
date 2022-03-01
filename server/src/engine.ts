@@ -75,27 +75,27 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
 
   const nsImportsForScope = {};
   for (const [local, { importedNamespace, imported, isBuiltIn }] of nsImports.entries()) {
-      if (!isBuiltIn && imported === symbols.namespaceExport) {
-        nsImportsForScope[local] = constructNamespaceExport(importedNamespace);
-      } else if (isBuiltIn) {
-        const module = createRequire(namespace)(importedNamespace);
-        switch (imported) {
-          case symbols.defaultExport:
-            nsImportsForScope[local] = module;
-            break;
-          case symbols.namespaceExport:
-            nsImportsForScope[local] = module;
-            break;
-          default:
-            nsImportsForScope[local] = module[imported];
-            break;
-        }
-      } else {
-        const nsExports = valueExports.get(importedNamespace);
-        const exported = nsExports?.get(imported);
-        const exportedValue = exported && namespaces.get(importedNamespace)?.get(exported.local);
-        nsImportsForScope[local] = exportedValue;
+    if (!isBuiltIn && imported === symbols.namespaceExport) {
+      nsImportsForScope[local] = constructNamespaceExport(importedNamespace);
+    } else if (isBuiltIn) {
+      const module = createRequire(namespace)(importedNamespace);
+      switch (imported) {
+        case symbols.defaultExport:
+          nsImportsForScope[local] = module;
+          break;
+        case symbols.namespaceExport:
+          nsImportsForScope[local] = module;
+          break;
+        default:
+          nsImportsForScope[local] = module[imported];
+          break;
       }
+    } else {
+      const nsExports = valueExports.get(importedNamespace);
+      const exported = nsExports?.get(imported);
+      const exportedValue = exported && namespaces.get(importedNamespace)?.get(exported.local);
+      nsImportsForScope[local] = exportedValue;
+    }
   }
 
   const exportsStub = new Proxy({}, {
@@ -351,10 +351,10 @@ function transformer(evalImports?: boolean, debug?: boolean) {
 
             const registerExportExpr = t.callExpression(
               t.identifier(registerValueExport.name), [
-                t.stringLiteral(fileName),
-                t.stringLiteral(specifier.local.name),
-                specifier.exported.type === 'StringLiteral' ? specifier.exported : t.stringLiteral(specifier.exported.name),
-              ]);
+              t.stringLiteral(fileName),
+              t.stringLiteral(specifier.local.name),
+              specifier.exported.type === 'StringLiteral' ? specifier.exported : t.stringLiteral(specifier.exported.name),
+            ]);
             path.insertAfter(registerExportExpr);
           }
           path.remove();
@@ -378,10 +378,10 @@ function transformer(evalImports?: boolean, debug?: boolean) {
 
           const registerExportExpr = t.callExpression(
             t.identifier(registerValueExport.name), [
-              t.stringLiteral(fileName),
-              t.stringLiteral(binding.identifier.name),
-              t.stringLiteral(binding.identifier.name)
-            ]);
+            t.stringLiteral(fileName),
+            t.stringLiteral(binding.identifier.name),
+            t.stringLiteral(binding.identifier.name)
+          ]);
           const { path } = binding;
           const isExportedVar = ancestorsAre(path, [
             'VariableDeclarator',
@@ -413,10 +413,10 @@ function transformer(evalImports?: boolean, debug?: boolean) {
             declaration.id = id;
             const registerValueExpr = t.callExpression(
               t.identifier(registerValue.name), [
-                t.stringLiteral(fileName),
-                t.stringLiteral(id.name),
-                id
-              ]);
+              t.stringLiteral(fileName),
+              t.stringLiteral(id.name),
+              id
+            ]);
             path.insertAfter(registerValueExpr);
           }
           local = declaration.id;
@@ -428,9 +428,9 @@ function transformer(evalImports?: boolean, debug?: boolean) {
 
         const registerDefaultExportExpr = t.callExpression(
           t.identifier(registerDefaultValueExport.name), [
-            t.stringLiteral(fileName),
-            t.stringLiteral(local.name)
-          ]);
+          t.stringLiteral(fileName),
+          t.stringLiteral(local.name)
+        ]);
         path.replaceWith(path.node.declaration);
         path.insertAfter(registerDefaultExportExpr);
       },

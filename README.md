@@ -58,7 +58,7 @@ Inspired by (check them out!):
 
 ## Write a plug-in for your editor/IDE!
 
-[![NPM](https://nodei.co/npm/<package>.png)](https://nodei.co/npm/<package>/)
+[![NPM](https://nodei.co/npm/skerrick.png)](https://nodei.co/npm/skerrick/)
 
 * `npm install -g skerrick` - this installs the bin `skerrick`  
 

@@ -166,7 +166,13 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
     console.log('ns for scope', nsForScope);
   }
 
-  const result = vm.runInNewContext(`
+  const vmGlobal = {};
+  const globalProps = Object.getOwnPropertyNames(global);
+  for (const k of globalProps) {
+    vmGlobal[k] = global[k];
+  }
+
+  const result = vm.runInContext(`
   with (nsImportsForScope) {
     with (nsForScope) {
       (function () {
@@ -179,7 +185,7 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
       })();
     }
   }`, vm.createContext({
-    ...global,
+    ...vmGlobal,
     ...cjsStubs,
     nsImportsForScope,
     nsForScope,
@@ -188,7 +194,9 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
     registerValueImport,
     registerDefaultValueExport,
     dynamicImport,
-  }, { microtaskMode: undefined }));
+  }, { microtaskMode: undefined }), {
+    lineOffset: -5, columnOffset: -11 // TODO Is this correct?
+  });
   return result;
 }
 
@@ -300,12 +308,14 @@ function transformer(evalImports?: boolean, debug?: boolean) {
           if (binding.path.type === 'ImportSpecifier' || binding.path.type === 'ImportDefaultSpecifier') {
             continue;
           }
-          const registerValueExpr = t.callExpression(
-            t.identifier(registerValue.name), [
-            t.stringLiteral(fileName),
-            t.stringLiteral(binding.identifier.name),
-            binding.identifier
-          ]);
+          const registerValueExpr = t.expressionStatement(
+            t.callExpression(
+              t.identifier(registerValue.name), [
+              t.stringLiteral(fileName),
+              t.stringLiteral(binding.identifier.name),
+              binding.identifier
+            ])
+          );
           const parent = binding.path.parentPath;
           if (!parent) continue;
           // For variable declarations, the parent is "VariableDeclaration".
@@ -329,13 +339,15 @@ function transformer(evalImports?: boolean, debug?: boolean) {
         }
 
         const fileName = extractFileName(state);
-        const dynamicImportExpr = t.callExpression(
-          t.identifier(dynamicImport.name), [
-          t.stringLiteral(fileName),
-          path.node.arguments[0],
-          t.booleanLiteral(!!evalImports),
-          t.booleanLiteral(!!debug)
-        ]);
+        const dynamicImportExpr = t.expressionStatement(
+          t.callExpression(
+            t.identifier(dynamicImport.name), [
+            t.stringLiteral(fileName),
+            path.node.arguments[0],
+            t.booleanLiteral(!!evalImports),
+            t.booleanLiteral(!!debug)
+          ])
+        );
         path.replaceWith(dynamicImportExpr);
       },
       ExpressionStatement(path: NodePath<t.ExpressionStatement>, state: PluginPass) {
@@ -359,12 +371,14 @@ function transformer(evalImports?: boolean, debug?: boolean) {
           for (const specifier of (path.node.specifiers || [])) {
             if (specifier.type !== 'ExportSpecifier') continue;
 
-            const registerExportExpr = t.callExpression(
-              t.identifier(registerValueExport.name), [
-              t.stringLiteral(fileName),
-              t.stringLiteral(specifier.local.name),
-              specifier.exported.type === 'StringLiteral' ? specifier.exported : t.stringLiteral(specifier.exported.name),
-            ]);
+            const registerExportExpr = t.expressionStatement(
+              t.callExpression(
+                t.identifier(registerValueExport.name), [
+                t.stringLiteral(fileName),
+                t.stringLiteral(specifier.local.name),
+                specifier.exported.type === 'StringLiteral' ? specifier.exported : t.stringLiteral(specifier.exported.name),
+              ])
+            );
             path.insertAfter(registerExportExpr);
           }
           path.remove();
@@ -386,12 +400,14 @@ function transformer(evalImports?: boolean, debug?: boolean) {
             processedBindings.add(binding);
           }
 
-          const registerExportExpr = t.callExpression(
-            t.identifier(registerValueExport.name), [
-            t.stringLiteral(fileName),
-            t.stringLiteral(binding.identifier.name),
-            t.stringLiteral(binding.identifier.name)
-          ]);
+          const registerExportExpr = t.expressionStatement(
+            t.callExpression(
+              t.identifier(registerValueExport.name), [
+              t.stringLiteral(fileName),
+              t.stringLiteral(binding.identifier.name),
+              t.stringLiteral(binding.identifier.name)
+            ])
+          );
           const { path } = binding;
           const isExportedVar = ancestorsAre(path, [
             'VariableDeclarator',
@@ -421,12 +437,14 @@ function transformer(evalImports?: boolean, debug?: boolean) {
           if (declaration.id === null || declaration.id === undefined) {
             const id = t.identifier('_' + uuid().replace(/-/g, ''));
             declaration.id = id;
-            const registerValueExpr = t.callExpression(
-              t.identifier(registerValue.name), [
-              t.stringLiteral(fileName),
-              t.stringLiteral(id.name),
-              id
-            ]);
+            const registerValueExpr = t.expressionStatement(
+              t.callExpression(
+                t.identifier(registerValue.name), [
+                t.stringLiteral(fileName),
+                t.stringLiteral(id.name),
+                id
+              ])
+            );
             path.insertAfter(registerValueExpr);
           }
           local = declaration.id;
@@ -436,11 +454,13 @@ function transformer(evalImports?: boolean, debug?: boolean) {
           return unexpected(`Default export: ${declaration.type}`);
         }
 
-        const registerDefaultExportExpr = t.callExpression(
-          t.identifier(registerDefaultValueExport.name), [
-          t.stringLiteral(fileName),
-          t.stringLiteral(local.name)
-        ]);
+        const registerDefaultExportExpr = t.expressionStatement(
+          t.callExpression(
+            t.identifier(registerDefaultValueExport.name), [
+            t.stringLiteral(fileName),
+            t.stringLiteral(local.name)
+          ])
+        );
         path.replaceWith(path.node.declaration);
         path.insertAfter(registerDefaultExportExpr);
       },

@@ -194,7 +194,9 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
     registerValueImport,
     registerDefaultValueExport,
     dynamicImport,
-  }, { microtaskMode: undefined }), {
+  }), {
+    filename: namespace,
+    microtaskMode: undefined,
     lineOffset: -5, columnOffset: -11 // TODO Is this correct?
   });
   return result;

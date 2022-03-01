@@ -6,6 +6,9 @@ class Baz {
   foo () { return foo; }
 }
 
-export default Baz;
+/** Returns the bar of foo */
+export default function () {
+  return foo.bar();
+}
 
 new Baz().foo().bar();

@@ -1,1 +1,3 @@
-100
+function () {
+  return m3.c;
+}

@@ -406,8 +406,20 @@ function transformer(evalImports?: boolean, debug?: boolean) {
 
         let local: t.Identifier;
         const { declaration } = path.node;
-        if (t.isClassDeclaration(declaration) || t.isFunctionDeclaration(declaration)) {
-          local = declaration.id!;
+        // Non-named fn or class
+        if (t.isFunctionDeclaration(declaration) || t.isClassDeclaration(declaration)) {
+          if (declaration.id === null || declaration.id === undefined) {
+            const id = t.identifier('_' + uuid().replace(/-/g, ''));
+            declaration.id = id;
+            const registerValueExpr = t.callExpression(
+              t.identifier(registerValue.name), [
+                t.stringLiteral(fileName),
+                t.stringLiteral(id.name),
+                id
+              ]);
+            path.insertAfter(registerValueExpr);
+          }
+          local = declaration.id;
         } else if (t.isIdentifier(declaration)) {
           local = declaration;
         } else {

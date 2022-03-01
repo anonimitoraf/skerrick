@@ -437,7 +437,7 @@ function transformer(evalImports?: boolean, debug?: boolean) {
         // Non-named fn or class
         if (t.isFunctionDeclaration(declaration) || t.isClassDeclaration(declaration)) {
           if (declaration.id === null || declaration.id === undefined) {
-            const id = t.identifier('_' + uuid().replace(/-/g, ''));
+            const id = t.identifier(_.uniqueId('__defaultExport'));
             declaration.id = id;
             const registerValueExpr = t.expressionStatement(
               t.callExpression(

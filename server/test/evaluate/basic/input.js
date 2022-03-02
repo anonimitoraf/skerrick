@@ -1,3 +1,2 @@
-const x = Date.now();
+const x = 42;
 x;
-console.log(x + x);

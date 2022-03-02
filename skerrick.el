@@ -49,8 +49,12 @@
 (defvar skerrick-server-port 4321)
 (defvar skerrick-result-overlay-char-count-trunc 120
   "If the evaluation result is longer than this, then it's truncated.")
+(defvar skerrick-pop-result-buffer-for-stdout t
+  "Show the result buffer if stderr is non-empty.")
+(defvar skerrick-pop-result-buffer-for-stderr t
+  "Show the result buffer if stderr is non-empty.")
+
 (defvar skerrick--result-buffer "*skerrick-result*")
-(defvar skerrick--process-buffer "*skerrick-stdout-stderr*")
 (defvar skerrick--eval-overlay nil)
 (defvar skerrick--remove-eval-overlay-on-next-cmd? nil)
 (defvar skerrick--hooks-setup? nil)
@@ -64,27 +68,36 @@
   (overlay-put skerrick--eval-overlay 'before-string
                (propertize value 'face face)))
 
-(defun skerrick--append-to-process-buffer (value)
-  "Append VALUE to designated buffer."
-  (with-current-buffer (get-buffer-create skerrick--process-buffer)
-    (read-only-mode -1)
-    (goto-char (point-max)) ; Append to buffer
-    (insert value ?\n)
-    (read-only-mode +1)))
+(defun skerrick--append-to-process-buffer (value &optional show-buffer?)
+  "Append VALUE to designated buffer. Optionally, SHOW-BUFFER."
+  (save-excursion
+    (with-current-buffer (get-buffer-create skerrick--result-buffer)
+      (read-only-mode -1)
+      (goto-char (point-max))           ; Append to buffer
+      (insert value ?\n)
+      (read-only-mode +1))
+    (when show-buffer?
+      (display-buffer-in-side-window (get-buffer-create skerrick--result-buffer) '((side . right)))
+      ;; TODO Scroll down the result buffer/window to the bottom
+      )))
 
 (defun skerrick--process-server-response (response)
   "Process RESPONSE from skerrick server."
-  (let* ((stdout (alist-get 'stdout response))
-          (stderr (alist-get 'stderr response))
-          (result (alist-get 'result response))
-          (result-str (if result (json-encode result) "undefined")))
+  (let* ((stdout (string-trim (alist-get 'stdout response)))
+         (stderr (string-trim (alist-get 'stderr response)))
+         (result (alist-get 'result response))
+         (result-str (if result (json-encode result) "undefined")))
     (skerrick--append-to-process-buffer (format "[RESULT] %s" result-str))
-    (when stdout (skerrick--append-to-process-buffer (format "[STDOUT] %s" stdout)))
-    (when stderr (skerrick--append-to-process-buffer (format "[STDERR] %s" (skerrick--propertize-error stderr))))
+    (unless (zerop (length stdout))
+      (skerrick--append-to-process-buffer (format "[STDOUT] %s" stdout)
+        skerrick-pop-result-buffer-for-stdout))
+    (unless (zerop (length stderr))
+      (skerrick--append-to-process-buffer (format "[STDERR] %s" (skerrick--propertize-error stderr))
+        skerrick-pop-result-buffer-for-stderr))
     (skerrick--display-overlay (format " => %s " (if (> (length result-str) skerrick-result-overlay-char-count-trunc)
                                                    (format "%s (result truncated, see buffer %s)"
                                                      (truncate-string-to-width result-str skerrick-result-overlay-char-count-trunc nil nil t)
-                                                     skerrick--process-buffer)
+                                                     skerrick--result-buffer)
                                                    result-str))
       'skerrick-result-overlay-face)
     (setq skerrick--remove-eval-overlay-on-next-cmd? t)))
@@ -129,8 +142,7 @@
       (skip-chars-backward "\r\n[:blank:]")
       ;; Seems like the END arg of make-overlay is useless. Just use the same value as BEGIN
       (setq skerrick--eval-overlay (make-overlay (point) (point) (current-buffer))))
-    (skerrick--append-to-process-buffer (format "\n[NAMESPACE] %s" file-path))
-    (skerrick--append-to-process-buffer (format "[EVAL]\n%s" selected-code))
+    (skerrick--append-to-process-buffer (format "\n[EVAL - %s]\n%s" file-path selected-code))
     (skerrick--send-eval-req selected-code file-path)))
 
 ;;;###autoload

@@ -78,6 +78,8 @@ It may also be helpful to provide a quick keyboard shortcut. E.g., `C-x C-e` eva
 | `skerrick-server-port` | Port to run the `skerrick` server on | 4321 |
 | `skerrick-result-overlay-face` | Face used to display evaluation results | |
 | `skerrick-result-overlay-char-count-trunc` | Results with char count longer than this are truncated | 120 |
+| `skerrick-pop-result-buffer-for-stdout` | Show result buffer if stdout is non-empty | t |
+| `skerrick-pop-result-buffer-for-stderr` | Show result buffer if stderr is non-empty | t |
 
 ### Usage
 | Command | Desc |

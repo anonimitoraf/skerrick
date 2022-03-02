@@ -67,14 +67,10 @@
 (defun skerrick--append-to-process-buffer (value)
   "Append VALUE to designated buffer."
   (with-current-buffer (get-buffer-create skerrick--process-buffer)
+    (read-only-mode -1)
     (goto-char (point-max)) ; Append to buffer
-    (insert value ?\n)))
-
-(defun skerrick--append-to-result-buffer (value)
-  "Append VALUE to designated buffer."
-  (with-current-buffer (get-buffer-create skerrick--result-buffer)
-    (goto-char (point-max)) ; Append to buffer
-    (insert value ?\n)))
+    (insert value ?\n)
+    (read-only-mode +1)))
 
 (defun skerrick--process-server-response (response)
   "Process RESPONSE from skerrick server."
@@ -82,13 +78,13 @@
           (stderr (alist-get 'stderr response))
           (result (alist-get 'result response))
           (result-str (if result (json-encode result) "undefined")))
-    (when stdout (skerrick--append-to-process-buffer stdout))
-    (when stderr (skerrick--append-to-process-buffer (skerrick--propertize-error stderr)))
-    (skerrick--append-to-result-buffer result-str)
+    (skerrick--append-to-process-buffer (format "[RESULT] %s" result-str))
+    (when stdout (skerrick--append-to-process-buffer (format "[STDOUT] %s" stdout)))
+    (when stderr (skerrick--append-to-process-buffer (format "[STDERR] %s" (skerrick--propertize-error stderr))))
     (skerrick--display-overlay (format " => %s " (if (> (length result-str) skerrick-result-overlay-char-count-trunc)
                                                    (format "%s (result truncated, see buffer %s)"
                                                      (truncate-string-to-width result-str skerrick-result-overlay-char-count-trunc nil nil t)
-                                                     skerrick--result-buffer)
+                                                     skerrick--process-buffer)
                                                    result-str))
       'skerrick-result-overlay-face)
     (setq skerrick--remove-eval-overlay-on-next-cmd? t)))
@@ -123,7 +119,8 @@
     (setq skerrick--hooks-setup? t))
   (let* ((beg (region-beginning))
           (end (region-end))
-          (selected-code (format "%s" (buffer-substring-no-properties beg end))))
+          (selected-code (format "%s" (buffer-substring-no-properties beg end)))
+          (file-path (buffer-file-name)))
     ;; Clean up previous eval overlay
     (skerrick-remove-eval-overlay)
     (save-excursion
@@ -132,7 +129,9 @@
       (skip-chars-backward "\r\n[:blank:]")
       ;; Seems like the END arg of make-overlay is useless. Just use the same value as BEGIN
       (setq skerrick--eval-overlay (make-overlay (point) (point) (current-buffer))))
-    (skerrick--send-eval-req selected-code (buffer-file-name))))
+    (skerrick--append-to-process-buffer (format "\n[NAMESPACE] %s" file-path))
+    (skerrick--append-to-process-buffer (format "[EVAL]\n%s" selected-code))
+    (skerrick--send-eval-req selected-code file-path)))
 
 ;;;###autoload
 (defun skerrick-install-or-upgrade-server-binary ()

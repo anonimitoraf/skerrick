@@ -37,8 +37,7 @@
 - [X] JSON outputs are showing up as plists
 - [X] Overlays should disappear on movement
 - [X] Support result truncation
-- [ ] Create a minor-mode
-- [ ] Focus stdout/stderr buffer on eval, when needed
+- [X] Focus stdout/stderr buffer on eval, when needed
 * TODOs - VSCode
 - [X] Command to start/stop server
 - [X] Support result truncation

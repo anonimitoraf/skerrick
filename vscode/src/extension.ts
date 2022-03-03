@@ -55,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
   [evalCommand, startServerCommand, stopServerCommand].forEach(cmd => context.subscriptions.push(cmd));
 }
 
-async function evalCode () {
+async function evalCode() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) return; // No open text editor
 
@@ -96,7 +96,8 @@ async function evalCode () {
 function makeOverlay(selection: Range, text: string) {
   const decoration: DecorationOptions = {
     range: selection,
-    renderOptions: { after: { contentText: text } }};
+    renderOptions: { after: { contentText: text } }
+  };
   return decoration;
 }
 
@@ -112,7 +113,7 @@ function hideOverlays(editor: TextEditor) {
 
 let serverInstance: (() => void) | undefined;
 
-function startServer () {
+function startServer() {
   if (serverInstance) {
     outputChannel.appendLine(`[NOTICE]: Attempted to start skerrick server but it's already running. No op...`);
   }

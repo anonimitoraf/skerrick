@@ -8,7 +8,7 @@ const code
   = "function foo(input: number) {\n"
   + "    console.log('Hello!');\n"
   + "};\n"
-  + "foo('x');"
+  + "// foo('x');"
   ;
 
 //
@@ -71,6 +71,25 @@ console.log();
 
 console.log("==== Diagnostics ====");
 for (const diagnostic of result.diagnostics) {
+  console.log(diagnostic.messageText);
+}
+console.log();
+
+////////////////
+
+console.log("==== Evaluating code ====");
+const code2 = 'foo(123)'
+console.log(code2);
+console.log();
+
+const result2 = compileTypeScriptCode(code2, libs);
+
+console.log("==== Output code ====");
+console.log(result2.code);
+console.log();
+
+console.log("==== Diagnostics ====");
+for (const diagnostic of result2.diagnostics) {
   console.log(diagnostic.messageText);
 }
 console.log();

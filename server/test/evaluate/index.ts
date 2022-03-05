@@ -10,14 +10,14 @@ const isScratch = process.argv[2] === 'scratch';
 const dirs = isScratch
   ? ['scratchpad']
   : [
-    'basic',
-    'exports-and-imports',
-    'default-exports-and-imports',
-    'imports-built-ins',
-    'commonjs',
-    'async',
+    // 'basic',
+    // 'exports-and-imports',
+    // 'default-exports-and-imports',
+    // 'imports-built-ins',
+    // 'commonjs',
+    // 'async',
     'native-addons',
-    'dynamic-imports'
+    // 'dynamic-imports'
   ]
 
 const delimiter = "// ---";

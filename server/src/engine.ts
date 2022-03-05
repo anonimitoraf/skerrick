@@ -186,7 +186,7 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
     }
   }`, vm.createContext({
     ...vmGlobal,
-    ...cjsStubs,
+    // ...cjsStubs,
     nsImportsForScope,
     nsForScope,
     registerValue,
@@ -280,13 +280,24 @@ function dynamicImport(
 }
 
 export function transform(namespace: string, code: string, evalImports?: boolean, debug?: boolean) {
-  const output = babel.transformSync(code, {
+  console.log("ORIG CODE", code);
+  const output1 = babel.transformSync(code, {
+    plugins: ["transform-commonjs-es2015-modules"],
+    filename: namespace,
+    parserOpts: {
+      allowUndeclaredExports: true
+    }
+  })
+  console.log("CODE 1st pass", output1?.code);
+  // return output1?.code;
+  const output = babel.transformSync((output1 as any).code, {
     plugins: [transformer(evalImports, debug)],
     filename: namespace,
     parserOpts: {
       allowUndeclaredExports: true,
     }
   });
+  console.log("CODE 2nd pass", output?.code);
   return output?.code;
 }
 
@@ -311,6 +322,17 @@ function transformer(evalImports?: boolean, debug?: boolean) {
             || binding.path.type === 'ImportDefaultSpecifier'
             || binding.path.type === 'ImportNamespaceSpecifier') {
             continue;
+          }
+          // Also check for commonjs requires. Exempt them like we did for ES imports
+          if (binding.path.node.type === 'VariableDeclarator') {
+            const { node } = binding.path;
+            if (node?.init?.type === 'CallExpression'
+              && node?.init?.callee.type === 'Identifier'
+              // For ease, we assume that `require` isn't shadowed
+              && node?.init?.callee.name === 'require'
+            ) {
+              continue;
+            }
           }
           const registerValueExpr = t.expressionStatement(
             t.callExpression(
@@ -436,6 +458,35 @@ function transformer(evalImports?: boolean, debug?: boolean) {
 
         let local: t.Identifier;
         const { declaration } = path.node;
+
+        if (t.isObjectExpression(declaration) || t.isMemberExpression(declaration)) {
+          const id = t.identifier(_.uniqueId('__defaultExport'));
+          local = id;
+
+          const registerDeclExpr = t.variableDeclaration('const', [t.variableDeclarator(id, declaration)]);
+          path.insertBefore(registerDeclExpr);
+
+          const registerValueExpr = t.expressionStatement(
+            t.callExpression(
+              t.identifier(registerValue.name), [
+              t.stringLiteral(fileName),
+              t.stringLiteral(id.name),
+              id
+            ])
+          );
+          path.insertAfter(registerValueExpr);
+
+          const registerDefaultExportExpr = t.expressionStatement(
+            t.callExpression(
+              t.identifier(registerDefaultValueExport.name), [
+              t.stringLiteral(fileName),
+              t.stringLiteral(local.name)
+            ])
+          );
+          path.replaceWith(registerDefaultExportExpr);
+          return;
+        }
+
         // Non-named fn or class
         if (t.isFunctionDeclaration(declaration) || t.isClassDeclaration(declaration)) {
           if (declaration.id === null || declaration.id === undefined) {
@@ -455,7 +506,9 @@ function transformer(evalImports?: boolean, debug?: boolean) {
         } else if (t.isIdentifier(declaration)) {
           local = declaration;
         } else {
-          return unexpected(`Default export: ${declaration.type}`);
+          console.error(`Unexpected: default export: ${declaration.type}`);
+          // TODO WHY DOES THIS ERROR NOT GET DETECTED?
+          return unexpected(`default export: ${declaration.type}`);
         }
 
         const registerDefaultExportExpr = t.expressionStatement(

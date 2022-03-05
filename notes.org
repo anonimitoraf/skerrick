@@ -45,3 +45,10 @@
 - [ ] Icon
 * Document caveats
 - Normal execution: error when undefined identifier vs Skerrick: No error
+
+
+* Misc
+** How do we intercept commonjs requires?
+- Babel doesn't help much here because a =const x = require('x')= is simply a binding sourced from a fn call. There is no dedicated ParseTree node for it
+** Custom transformers
+- There are bound to be cases that won't work with Skerrick. So maybe, it makes sense to support custom transformers for these special cases?

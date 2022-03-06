@@ -1,4 +1,4 @@
-;;; skerrick.el --- Description -*- lexical-binding: t; -*-
+;;; skerrick.el --- REPL-driven development for NodeJS -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2022 Rafael Nicdao
 ;;

@@ -23,7 +23,7 @@ Inspired by (check them out!):
 
 ## Emacs
 
-[[http://stable.melpa.org/#/skerrick][file:http://stable.melpa.org/packages/skerrick.svg]]  [[http://melpa.org/#/skerrick][file:http://melpa.org/packages/skerrick.svg]]
+[![MELPA](https://melpa.org/packages/skerrick.svg)](https://melpa.org/#/skerrick) [![MELPA Stable](https://stable.melpa.org/packages/skerrick.svg)](https://stable.melpa.org/#/skerrick)
 
 ### Demos
 

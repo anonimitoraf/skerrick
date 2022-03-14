@@ -23,6 +23,8 @@ Inspired by (check them out!):
 
 ## Emacs
 
+[[http://stable.melpa.org/#/skerrick][file:http://stable.melpa.org/packages/skerrick.svg]]  [[http://melpa.org/#/skerrick][file:http://melpa.org/packages/skerrick.svg]]
+
 ### Demos
 
 #### Basic
@@ -35,11 +37,7 @@ Inspired by (check them out!):
 * `node`/`npm` installed and accessible by Emacs
 
 ### Installation
-* `skerrick` isn't in MELPA yet. You can clone this repo and evaluate `skerrick.el` in the meantime or use `straight`. For example, if you use Doom:
-```elisp
-(package! skerrick
-  :recipe (:host github :repo "anonimitoraf/skerrick"))
-```
+`skerrick` is in MELPA
 
 Or, if you're using Quelpa:
 ```

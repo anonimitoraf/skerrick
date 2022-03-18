@@ -1,4 +1,4 @@
-class __defaultExport2 {
+class __defaultExport3 {
   g() {
     return 900;
   }

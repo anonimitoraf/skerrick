@@ -1,0 +1,20 @@
+#+TITLE: On Implementing Modules
+
+* Requirements
+** Updating an import should reflect in all the references to that import
+- Although, variable assignments to the import wouldn't auto-update. They can however, re-eval those assignments.
+  TODO State this in the docs!
+
+* Plan of attack
+** First transformation phase: CommonJS -> ES
+- Although, because there is no direct transformation for stuff like =const [ a, b ] = require('something')=, it would have to be transformed to something like:
+ #+begin_src javascript
+ import _something from 'something';
+ const [ a, b ] = _something;
+ #+end_src
+but without the bindings being registered directly as part of the namespace.
+It would make sense the implement the latter part first:
+#+begin_quote
+but without the bindings being registered directly as part of the namespace.
+#+end_quote
+because it's more _uncertain_ (in terms of being doable) than doing the CommonJS -> ES transformation

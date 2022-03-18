@@ -147,9 +147,6 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
   const __filenameStub = namespace;
   const __dirnameStub = fsPath.dirname(namespace);
   const cjsStubs = {
-    module: moduleStub,
-    exports: moduleStub.exports,
-    require: requireStub,
     __filename: __filenameStub,
     __dirname: __dirnameStub
   };
@@ -161,9 +158,9 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
 
   if (debug) {
     // console.log('all exports', namespaceExports);
-    console.log('all imports', namespaceImports);
-    console.log('ns imports for scope', nsImportsForScope);
-    console.log('ns for scope', nsForScope);
+    // console.log('all imports', namespaceImports);
+    // console.log('ns imports for scope', nsImportsForScope);
+    // console.log('ns for scope', nsForScope);
   }
 
   const vmGlobal = {};
@@ -280,14 +277,24 @@ function dynamicImport(
 }
 
 export function transform(namespace: string, code: string, evalImports?: boolean, debug?: boolean) {
-  const output = babel.transformSync(code, {
-    plugins: [transformer(evalImports, debug)],
+  const f = (code: string, plugin: any) => babel.transformSync(code, {
+    plugins: [plugin],
     filename: namespace,
     parserOpts: {
       allowUndeclaredExports: true,
     }
   });
-  return output?.code;
+
+  return (['babel-plugin-transform-modules-commonjs-to-es2015', transformer(evalImports, debug)] as any[])
+    .reduce((codeTransformed, plugin) => {
+      const transformed = f(codeTransformed, plugin)?.code;
+      if (debug) {
+        console.log(`Code transformed by plugin ${
+          typeof plugin === 'function' ? plugin.name : plugin
+        }: ${transformed}`);
+      }
+      return transformed;
+    }, code)
 }
 
 function extractFileName(state: PluginPass) {
@@ -436,6 +443,7 @@ function transformer(evalImports?: boolean, debug?: boolean) {
 
         let local: t.Identifier;
         const { declaration } = path.node;
+
         // Non-named fn or class
         if (t.isFunctionDeclaration(declaration) || t.isClassDeclaration(declaration)) {
           if (declaration.id === null || declaration.id === undefined) {
@@ -452,6 +460,20 @@ function transformer(evalImports?: boolean, debug?: boolean) {
             path.insertAfter(registerValueExpr);
           }
           local = declaration.id;
+        } else if (t.isExpression(declaration) || t.isLiteral(declaration)) {
+          const id = t.identifier(_.uniqueId('__defaultExport'));
+          const variableDeclaration = t.variableDeclaration('const', [t.variableDeclarator(id, declaration)]);
+          path.insertBefore(variableDeclaration);
+          const registerValueExpr = t.expressionStatement(
+            t.callExpression(
+              t.identifier(registerValue.name), [
+              t.stringLiteral(fileName),
+              t.stringLiteral(id.name),
+              id
+            ])
+          );
+          path.insertAfter(registerValueExpr);
+          local = id;
         } else if (t.isIdentifier(declaration)) {
           local = declaration;
         } else {

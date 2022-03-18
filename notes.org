@@ -45,3 +45,7 @@
 - [ ] Icon
 * Document caveats
 - Normal execution: error when undefined identifier vs Skerrick: No error
+* CommonJS vs ES
+- My initial plan of attack was to transform CommonJS -> ES, but I now believe that this is too difficult to do. There are edge cases such as =require(a ? 'a' : 'b')= that are not translatable to ES.
+  So, pivoting from that, I plan on translating the other way around (ES -> CommonJS) which babel can do out of the box.
+  The problem to be solved is: making sure that the bindings from requires/imports get updated accordingly. If this is too hard to do, maybe just state it as a caveat.

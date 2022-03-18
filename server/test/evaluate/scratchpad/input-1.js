@@ -1,4 +1,7 @@
-export const a = 10;
-
-const b = 200;
-export default b;
+module.exports = {
+  a: 1
+}
+// ---
+module.exports.b = 2;
+// ---
+// exports.c = 3;

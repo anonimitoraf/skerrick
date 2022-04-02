@@ -12,28 +12,18 @@ export const wrapImports = ({ types: t }: { types: typeof types }) => ({
     CallExpression (path: NodePath<types.CallExpression>, state: PluginPass) {
       if (
         t.isIdentifier(path.node.callee, {name: 'require'}) &&
-        t.isStringLiteral(path.node.arguments[0]) &&
         path.node.arguments.length === 1
       ) {
-        // const program = path.findParent(t.isProgram) as NodePath<types.Program>;
-        // const dependencyName = path.node.arguments[0].value;
-
-        // const importAlias = path.scope.generateUidIdentifier(`${extractOpts(state).importIdentifierPrefix || ''}${dependencyName}`);
-        // const importDeclaration = t.importDeclaration(
-        //   [t.importNamespaceSpecifier(importAlias)],
-        //   t.stringLiteral(dependencyName)
-        // );
-
-        // const lastImportIdx = program.node.body.map(stmt => t.isImportDeclaration(stmt)).lastIndexOf(true);
-        // program.node.body.splice(lastImportIdx + 1, 0, importDeclaration);
-        // path.replaceWith(importAlias);
-
-        const wrappedImport = t.newExpression(
-          t.identifier(SkerrickWrappedImport.name),
-          [t.arrowFunctionExpression([], path.node)]
-        );
-        path.replaceWith(wrappedImport);
-        path.stop();
+        // For example:
+        // const a = new SkerrickWrappedImport(() => require("./a"));
+        // const b = new SkerrickWrappedImport(() => require("./b")("b"));
+        const declaratorParent = path.findParent(path => path.isVariableDeclarator()) as NodePath<types.VariableDeclarator>;
+        if (declaratorParent && declaratorParent.node.init) {
+          declaratorParent.node.init = t.newExpression(
+            t.identifier(SkerrickWrappedImport.name),
+            [t.arrowFunctionExpression([], declaratorParent.node.init)]
+          );
+        }
       }
     }
   }
@@ -58,5 +48,5 @@ function transform(code: string) {
 }
 
 [
-  'const a = require("./a"); const b = require("./b")("b");'
+  'const a = require("./a"); const b = require("./b")("b"); require("./c");'
 ].forEach(c => console.log(transform(c)));

@@ -45,3 +45,26 @@
 - [ ] Icon
 * Document caveats
 - Normal execution: error when undefined identifier vs Skerrick: No error
+* Path of least resistance: ES -> CJS
+** Pros
+- Babel does the heavy-lifting
+** Cons
+- Imports are no longer "live" values, so imports/requires have to be re-evaluated.
+  But what if Skerrick does this automatically? How? It doesn't have access to the entire code!
+** Things that need to be done
+- Imports/requires need to not be cached as a namespace value!
+  - Is there a way to easily distinguish imports/requires from regular bindings (via assignments, etc)?
+    - Not simple, given the fact that you can do something like =const x = require('a')('b')=
+  - What if every binding's value is "boxed"? (think, everything's potentially a thunk)
+    - Imports then are just thunks that resolve to values pulled out of lookups
+      - The problem here is the fact that there will have to be implicit unboxing before these values can be used. BUT HOW?
+- Actually, imports may be cached as a namespace value if it's boxed
+  - The unboxing can happen just before the bindings get injected into the scope, for example:
+#+begin_src js
+const x = require('./x');
+#+end_src
+becomes
+#+begin_src js
+const x = SkerrickImport(require('./x'));
+#+end_src
+which then gets unwrapped just before scope creation

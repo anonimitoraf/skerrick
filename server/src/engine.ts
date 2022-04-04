@@ -50,7 +50,7 @@ const namespaceImports = new Map<Namespace, NamespaceImportsByLocal>();
 
 function requireCustom(importingNamespace: string, importedNamespace: string, evalImports?: boolean, debug?: boolean) {
   const requiredNsNormalized = normalizeImportPath(importingNamespace, importedNamespace);
-  const isBuiltIn = !fsPath.isAbsolute(importedNamespace);
+  const isBuiltIn = !fsPath.isAbsolute(requiredNsNormalized);
   if (isBuiltIn) {
     return createRequire(importingNamespace)(requiredNsNormalized);
   }

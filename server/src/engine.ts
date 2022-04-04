@@ -8,6 +8,7 @@ import * as babel from '@babel/core';
 import * as t from '@babel/types';
 import { Binding, NodePath, Scope } from '@babel/traverse';
 import { PluginPass } from '@babel/core';
+import { SkerrickWrappedBinding, wrapImports } from './wrap-imports';
 
 const symbols = {
   defaultExport: Symbol('[[defaultExport]]'),
@@ -122,7 +123,9 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
     }
   })
 
-  const requireStub = importedNamespace => requireCustom(namespace, importedNamespace, evalImports, debug);
+  const require = importedNamespace => {
+    return requireCustom(namespace, importedNamespace, evalImports, debug);
+  }
 
   const moduleStub = new Proxy({
     exports: exportsStub
@@ -149,13 +152,16 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
   const cjsStubs = {
     module: moduleStub,
     exports: moduleStub.exports,
-    require: requireStub,
+    require: require,
     __filename: __filenameStub,
     __dirname: __dirnameStub
   };
 
+  console.log('ns', ns);
   const nsForScope = _([...ns.entries()])
-    .map(([k, v]) => [k, v])
+    .map(([k, v]) => {
+      return [k, v instanceof SkerrickWrappedBinding ? v.value() : v];
+    })
     .fromPairs()
     .value();
 
@@ -194,6 +200,7 @@ export function evaluate(namespace: string, code: string, evalImports?: boolean,
     registerValueImport,
     registerDefaultValueExport,
     dynamicImport,
+    SkerrickWrappedBinding
   }), {
     filename: namespace,
     microtaskMode: undefined,
@@ -280,7 +287,14 @@ function dynamicImport(
 }
 
 export function transform(namespace: string, code: string, evalImports?: boolean, debug?: boolean) {
-  const output = babel.transformSync(code, {
+  let output = babel.transformSync(code, {
+    plugins: [wrapImports],
+    filename: namespace,
+    parserOpts: {
+      allowUndeclaredExports: true,
+    }
+  });
+  output = babel.transformSync(output?.code!, {
     plugins: [transformer(evalImports, debug)],
     filename: namespace,
     parserOpts: {
@@ -312,16 +326,42 @@ function transformer(evalImports?: boolean, debug?: boolean) {
             || binding.path.type === 'ImportNamespaceSpecifier') {
             continue;
           }
-          const registerValueExpr = t.expressionStatement(
-            t.callExpression(
-              t.identifier(registerValue.name), [
-              t.stringLiteral(fileName),
-              t.stringLiteral(binding.identifier.name),
-              binding.identifier
-            ])
-          );
           const parent = binding.path.parentPath;
           if (!parent) continue;
+
+          let registerValueExpr: t.ExpressionStatement;
+          // Imports
+          const bindingNode = binding.path.node;
+          if (t.isVariableDeclarator(bindingNode)
+            && bindingNode.init
+            && t.isNewExpression(bindingNode.init)
+            && t.isIdentifier(bindingNode.init.callee)
+            && bindingNode.init.callee.name === SkerrickWrappedBinding.name
+          ) {
+            registerValueExpr = t.expressionStatement(
+              t.callExpression(
+                t.identifier(registerValue.name), [
+                t.stringLiteral(fileName),
+                t.stringLiteral(binding.identifier.name),
+                bindingNode.init
+              ])
+            );
+
+            const [thunk] = bindingNode.init.arguments;
+            if (t.isArrowFunctionExpression(thunk) && t.isExpression(thunk.body)) {
+              bindingNode.init = thunk.body;
+            }
+          } else {
+            registerValueExpr = t.expressionStatement(
+              t.callExpression(
+                t.identifier(registerValue.name), [
+                t.stringLiteral(fileName),
+                t.stringLiteral(binding.identifier.name),
+                binding.identifier
+              ])
+            );
+          }
+
           // For variable declarations, the parent is "VariableDeclaration".
           // If we insert after the path (not the parent), we get something like:
           // `const x = 10, <inserted here>` which we don't want.

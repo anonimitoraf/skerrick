@@ -20,7 +20,7 @@ export const wrapImports = ({ types: t }: { types: typeof types }) => ({
         const declaratorParent = path.findParent(path => path.isVariableDeclarator()) as NodePath<types.VariableDeclarator>;
         if (declaratorParent && declaratorParent.node.init) {
           declaratorParent.node.init = t.newExpression(
-            t.identifier(SkerrickWrappedImport.name),
+            t.identifier(SkerrickWrappedBinding.name),
             [t.arrowFunctionExpression([], declaratorParent.node.init)]
           );
         }
@@ -29,24 +29,7 @@ export const wrapImports = ({ types: t }: { types: typeof types }) => ({
   }
 });
 
-
-class SkerrickWrappedImport<T> {
+export class SkerrickWrappedBinding<T> {
   constructor(private valueThunk: () => T) {}
-
   value(): T { return this.valueThunk(); }
 }
-
-// TODO Convert these to tests
-function transform(code: string) {
-  const output = babel.transformSync(code, {
-    plugins: [wrapImports],
-    parserOpts: {
-      allowUndeclaredExports: true,
-    }
-  });
-  return output?.code;
-}
-
-[
-  'const a = require("./a"); const b = require("./b")("b"); require("./c");'
-].forEach(c => console.log(transform(c)));

@@ -44,7 +44,7 @@ Or, if you're using Quelpa:
 (quelpa '(skerrick :repo "anonimitoraf/skerrick" :fetcher github))
 
 ;; Needs to be run on the very first install of skerrick. Or when you want to upgrade.
-(unless (equal (shell-command-to-string "type skerrick") "skerrick not found\n")
+(if (eq (shell-command "type skerrick") 1)
   (skerrick-install-or-upgrade-server-binary))
 
 ;; Should be run in a JS buffer; it is buffer specific.

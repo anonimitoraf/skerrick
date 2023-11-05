@@ -4,6 +4,8 @@ import * as babel from "@babel/core";
 import * as t from "@babel/types";
 import { NodePath } from "@babel/traverse";
 import { PluginPass } from "@babel/core";
+import { extractFileName } from "./utils";
+import { debug } from "./utils";
 
 // --- State ---
 
@@ -64,10 +66,10 @@ function transformer() {
           // const x = 10;
           // <inserted here>
           // ```
-          if (parent.type !== "Program") {
-            parent.insertAfter(registerValueExpr);
-          } else {
+          if (parent.type === "Program") {
             binding.path.insertAfter(registerValueExpr);
+          } else {
+            parent.insertAfter(registerValueExpr);
           }
         }
       },
@@ -88,41 +90,41 @@ function transformer() {
         state: PluginPass
       ) {
         const fileName = extractFileName(state);
+        const { declaration } = path.node;
 
         let local: t.Identifier;
-        const { declaration } = path.node;
-        // Non-named fn or class
-        if (
-          t.isFunctionDeclaration(declaration) ||
-          t.isClassDeclaration(declaration)
-        ) {
+        // Identifiers
+        if (t.isIdentifier(declaration)) {
+          local = declaration;
+        }
+        // Expressions
+        else if (t.isExpression(declaration)) {
+          local = t.identifier(_.uniqueId("__defaultExport"));
+        }
+        // Class or Function declaration
+        else {
           if (declaration.id === null || declaration.id === undefined) {
-            const id = t.identifier(_.uniqueId("__defaultExport"));
-            declaration.id = id;
-            const registerValueExpr = t.expressionStatement(
-              t.callExpression(t.identifier(registerValue.name), [
-                t.stringLiteral(fileName),
-                t.stringLiteral(id.name),
-                id,
-              ])
-            );
-            path.insertAfter(registerValueExpr);
+            declaration.id = t.identifier(_.uniqueId("__defaultExport"));
           }
           local = declaration.id;
-        } else if (t.isIdentifier(declaration)) {
-          local = declaration;
-        } else {
-          return unexpected(`Default export: ${declaration.type}`);
         }
 
+        const registerValueExpr = t.expressionStatement(
+          t.callExpression(t.identifier(registerValue.name), [
+            t.stringLiteral(fileName),
+            t.stringLiteral(local.name),
+            local,
+          ])
+        );
         const registerDefaultExportExpr = t.expressionStatement(
-          t.callExpression(t.identifier(registerDefaultValueExport.name), [
+          t.callExpression(t.identifier(registerDefaultExport.name), [
             t.stringLiteral(fileName),
             t.stringLiteral(local.name),
           ])
         );
+
         path.replaceWith(path.node.declaration);
-        path.insertAfter(registerDefaultExportExpr);
+        path.insertAfter([registerValueExpr, registerDefaultExportExpr]);
       },
     },
   });
@@ -131,13 +133,14 @@ function transformer() {
 export function evaluate(namespace: string, code: string) {
   const codeTransformed = transform(namespace, code);
   const context = namespaces.get(namespace) ?? {};
+  debug("transform", codeTransformed);
 
   // Configure context
   for (const k of Object.getOwnPropertyNames(global)) {
     context[k] = global[k];
   }
   context[registerValue.name] = registerValue;
-  context[registerDefaultValueExport.name] = registerDefaultValueExport;
+  context[registerDefaultExport.name] = registerDefaultExport;
 
   const result = vm.runInContext(
     `
@@ -151,11 +154,18 @@ export function evaluate(namespace: string, code: string) {
       })();
     `,
     vm.createContext(context),
-    { filename: namespace }
+    { filename: namespace, displayErrors: true }
   );
 
   const ns = namespaces.get(namespace);
-  console.log("namespaces", ns?.x, ns?.y);
+
+  const relevantEntries =
+    ns &&
+    Reflect.ownKeys(ns)
+      .filter((k) => !(k in global))
+      .map((k) => [k, ns[k]]);
+  debug("evaluate", relevantEntries);
+
   return result;
 }
 
@@ -168,21 +178,14 @@ function registerValue(namespace: string, key: string, value: any) {
   return value;
 }
 
-function registerDefaultValueExport(namespace: string, local: string) {
+function registerDefaultExport(namespace: string, local: string) {
   const values = namespaces.get(namespace) || {};
   namespaces.set(namespace, values);
-  values[symbols.defaultExport] = local;
-  return symbols.defaultExport.toString();
-}
 
-function extractFileName(state: PluginPass) {
-  const { filename } = state.file.opts;
-  if (!filename) {
-    throw Error("No filename");
+  if (!(local in values)) {
+    console.error("Missing local", local);
   }
-  return filename;
-}
 
-function unexpected(thing: string) {
-  throw Error("Unexpected: " + thing);
+  values[symbols.defaultExport] = values[local];
+  return symbols.defaultExport.toString();
 }

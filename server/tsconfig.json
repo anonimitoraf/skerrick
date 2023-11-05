@@ -1,8 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ESNext"
-    ],
+    "lib": ["ESNext"],
     "outDir": "dist",
     "removeComments": false,
     "target": "ES6",
@@ -24,8 +22,6 @@
     "strict": false,
     "declaration": true
   },
-  "include": ["src/**/*.ts"],
-  "exclude": [
-    "node_modules/**/*"
-  ]
+  "include": ["src/**/*.ts", "src/test.js"],
+  "exclude": ["node_modules/**/*"]
 }

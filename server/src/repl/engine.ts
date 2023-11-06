@@ -6,17 +6,9 @@ import { NodePath } from "@babel/traverse";
 import { PluginPass } from "@babel/core";
 import { extractFileName } from "./utils";
 import { debug } from "./utils";
-
-// --- State ---
-
-const symbols = {
-  defaultExport: Symbol("[[defaultExport]]"),
-  namespaceExport: Symbol("[[namespaceExport]]"),
-};
-
-type NS = string;
-type NSMembers = Record<string | symbol, any>;
-const namespaces = new Map<NS, NSMembers>();
+import { exportNamedDeclaration } from "./export-named-declaration";
+import { registerDefaultExport, registerValue, valuesLookup } from "./state";
+import { exportDefault } from "./export-default";
 
 // --- Transformation ---
 
@@ -39,7 +31,6 @@ function transformer() {
         for (const [bindingKey, binding] of Object.entries(
           path.scope.bindings
         )) {
-          // console.log('BINDING:', bindingKey, 'path node type:', binding.path.type);
           // NOTE: Imports are not bound/stored as values within the namespace. They are instead
           // resolved dynamically when evaluating code.
           if (
@@ -85,54 +76,15 @@ function transformer() {
         const toReturn = t.returnStatement(path.node.expression);
         path.replaceWith(toReturn);
       },
-      ExportDefaultDeclaration(
-        path: NodePath<t.ExportDefaultDeclaration>,
-        state: PluginPass
-      ) {
-        const fileName = extractFileName(state);
-        const { declaration } = path.node;
-
-        let local: t.Identifier;
-        // Identifiers
-        if (t.isIdentifier(declaration)) {
-          local = declaration;
-        }
-        // Expressions
-        else if (t.isExpression(declaration)) {
-          local = t.identifier(_.uniqueId("__defaultExport"));
-        }
-        // Class or Function declaration
-        else {
-          if (declaration.id === null || declaration.id === undefined) {
-            declaration.id = t.identifier(_.uniqueId("__defaultExport"));
-          }
-          local = declaration.id;
-        }
-
-        const registerValueExpr = t.expressionStatement(
-          t.callExpression(t.identifier(registerValue.name), [
-            t.stringLiteral(fileName),
-            t.stringLiteral(local.name),
-            local,
-          ])
-        );
-        const registerDefaultExportExpr = t.expressionStatement(
-          t.callExpression(t.identifier(registerDefaultExport.name), [
-            t.stringLiteral(fileName),
-            t.stringLiteral(local.name),
-          ])
-        );
-
-        path.replaceWith(path.node.declaration);
-        path.insertAfter([registerValueExpr, registerDefaultExportExpr]);
-      },
+      ExportNamedDeclaration: exportNamedDeclaration,
+      ExportDefaultDeclaration: exportDefault,
     },
   });
 }
 
 export function evaluate(namespace: string, code: string) {
   const codeTransformed = transform(namespace, code);
-  const context = namespaces.get(namespace) ?? {};
+  const context = valuesLookup.get(namespace) ?? {};
   debug("transform", codeTransformed);
 
   // Configure context
@@ -157,7 +109,7 @@ export function evaluate(namespace: string, code: string) {
     { filename: namespace, displayErrors: true }
   );
 
-  const ns = namespaces.get(namespace);
+  const ns = valuesLookup.get(namespace);
 
   const relevantEntries =
     ns &&
@@ -167,25 +119,4 @@ export function evaluate(namespace: string, code: string) {
   debug("evaluate", relevantEntries);
 
   return result;
-}
-
-// --- Utils ---
-
-function registerValue(namespace: string, key: string, value: any) {
-  const values = namespaces.get(namespace) || {};
-  namespaces.set(namespace, values);
-  values[key] = value;
-  return value;
-}
-
-function registerDefaultExport(namespace: string, local: string) {
-  const values = namespaces.get(namespace) || {};
-  namespaces.set(namespace, values);
-
-  if (!(local in values)) {
-    console.error("Missing local", local);
-  }
-
-  values[symbols.defaultExport] = values[local];
-  return symbols.defaultExport.toString();
 }

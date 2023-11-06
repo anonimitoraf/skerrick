@@ -17,3 +17,15 @@ export function debug(type: string, ...msg: any[]) {
   if (!enabled.includes(type)) return;
   console.debug(...msg);
 }
+
+/** Checks if `node` as any ancestors of `type` */
+export function ancestorsAre(node: any, types: babel.Node["type"][]) {
+  let isSatisfied = true;
+  for (const t of types) {
+    if (node.type !== t) {
+      return false;
+    }
+    node = node.parentPath;
+  }
+  return isSatisfied;
+}

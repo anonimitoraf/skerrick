@@ -11,18 +11,14 @@ type Lookup = Record<string | symbol, any>;
 export const valuesLookup = new Map<NS, Lookup>();
 export const exportsLookup = new Map<NS, Lookup>();
 
-export function doRegisterValue(namespace: string, key: string, value: any) {
+function doRegisterValue(namespace: string, key: string, value: any) {
   const values = valuesLookup.get(namespace) || {};
   valuesLookup.set(namespace, values);
   values[key] = value;
   return value;
 }
 
-export function doRegisterExport(
-  namespace: string,
-  local: string,
-  exported: string
-) {
+function doRegisterExport(namespace: string, local: string, exported: string) {
   const exportsValues = exportsLookup.get(namespace) || {};
   exportsLookup.set(namespace, exportsValues);
 
@@ -35,7 +31,7 @@ export function doRegisterExport(
   return exported;
 }
 
-export function doRegisterDefaultExport(namespace: string, local: string) {
+function doRegisterDefaultExport(namespace: string, local: string) {
   const exportsValues = exportsLookup.get(namespace) || {};
   exportsLookup.set(namespace, exportsValues);
 

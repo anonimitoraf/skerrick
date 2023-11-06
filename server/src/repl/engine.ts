@@ -5,9 +5,14 @@ import * as t from "@babel/types";
 import { NodePath } from "@babel/traverse";
 import { PluginPass } from "@babel/core";
 import { extractFileName } from "./utils";
-import { debug } from "./utils";
+import { DEBUG } from "./utils";
 import { exportNamedDeclaration } from "./export-named-declaration";
-import { registerDefaultExport, registerValue, valuesLookup } from "./state";
+import {
+  configureContext,
+  nonGlobals,
+  registerValue,
+  valuesLookup,
+} from "./state";
 import { exportDefault } from "./export-default";
 
 // --- Transformation ---
@@ -40,15 +45,14 @@ function transformer() {
           ) {
             continue;
           }
-          const registerValueExpr = t.expressionStatement(
-            t.callExpression(t.identifier(registerValue.name), [
-              t.stringLiteral(fileName),
-              t.stringLiteral(binding.identifier.name),
-              binding.identifier,
-            ])
-          );
           const parent = binding.path.parentPath;
           if (!parent) continue;
+
+          const regValue = registerValue(
+            fileName,
+            binding.identifier.name,
+            binding.identifier
+          );
           // For variable declarations, the parent is "VariableDeclaration".
           // If we insert after the path (not the parent), we get something like:
           // `const x = 10, <inserted here>` which we don't want.
@@ -58,16 +62,15 @@ function transformer() {
           // <inserted here>
           // ```
           if (parent.type === "Program") {
-            binding.path.insertAfter(registerValueExpr);
+            binding.path.insertAfter(regValue);
           } else {
-            parent.insertAfter(registerValueExpr);
+            parent.insertAfter(regValue);
           }
         }
       },
       ExpressionStatement(path: NodePath<t.ExpressionStatement>) {
-        if (path.scope.block.type !== "Program") {
-          return; // Not a global declaration
-        }
+        // Not a global declaration
+        if (path.scope.block.type !== "Program") return;
 
         const isLastChild = path.getAllNextSiblings().length <= 0;
         if (!isLastChild) return;
@@ -84,15 +87,10 @@ function transformer() {
 
 export function evaluate(namespace: string, code: string) {
   const codeTransformed = transform(namespace, code);
-  const context = valuesLookup.get(namespace) ?? {};
-  debug("transform", codeTransformed);
+  DEBUG("transform", codeTransformed);
 
-  // Configure context
-  for (const k of Object.getOwnPropertyNames(global)) {
-    context[k] = global[k];
-  }
-  context[registerValue.name] = registerValue;
-  context[registerDefaultExport.name] = registerDefaultExport;
+  const context = valuesLookup.get(namespace) ?? {};
+  configureContext(context);
 
   const result = vm.runInContext(
     `
@@ -108,15 +106,6 @@ export function evaluate(namespace: string, code: string) {
     vm.createContext(context),
     { filename: namespace, displayErrors: true }
   );
-
-  const ns = valuesLookup.get(namespace);
-
-  const relevantEntries =
-    ns &&
-    Reflect.ownKeys(ns)
-      .filter((k) => !(k in global))
-      .map((k) => [k, ns[k]]);
-  debug("evaluate", relevantEntries);
-
+  DEBUG("evaluate", nonGlobals(valuesLookup.get(namespace)));
   return result;
 }

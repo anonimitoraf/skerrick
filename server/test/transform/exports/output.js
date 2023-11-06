@@ -1,115 +1,115 @@
 const x = 1;
-registerValue("/input.js", "x", x);
-registerExport("/input.js", "x", "x");
-return registerValue("/input.js", "x", x);
+doRegisterValue("/input.js", "x", x);
+doRegisterExport("/input.js", "x", "x");
+return doRegisterValue("/input.js", "x", x);
 // ---
 const x = 1,
       y = 2;
-registerValue("/input.js", "y", y);
-registerExport("/input.js", "y", "y");
-registerValue("/input.js", "x", x);
-registerExport("/input.js", "x", "x");
-registerValue("/input.js", "y", y);
-return registerValue("/input.js", "x", x);
+doRegisterValue("/input.js", "y", y);
+doRegisterExport("/input.js", "y", "y");
+doRegisterValue("/input.js", "x", x);
+doRegisterExport("/input.js", "x", "x");
+doRegisterValue("/input.js", "y", y);
+return doRegisterValue("/input.js", "x", x);
 // ---
 function f() {}
 
-registerValue("/input.js", "f", f);
-registerExport("/input.js", "f", "f");
-return registerValue("/input.js", "f", f);
+doRegisterValue("/input.js", "f", f);
+doRegisterExport("/input.js", "f", "f");
+return doRegisterValue("/input.js", "f", f);
 // ---
 class C {}
 
-registerValue("/input.js", "C", C);
-registerExport("/input.js", "C", "C");
-return registerValue("/input.js", "C", C);
+doRegisterValue("/input.js", "C", C);
+doRegisterExport("/input.js", "C", "C");
+return doRegisterValue("/input.js", "C", C);
 // ---
 function* gen() {}
 
-registerValue("/input.js", "gen", gen);
-registerExport("/input.js", "gen", "gen");
-return registerValue("/input.js", "gen", gen);
+doRegisterValue("/input.js", "gen", gen);
+doRegisterExport("/input.js", "gen", "gen");
+return doRegisterValue("/input.js", "gen", gen);
 // ---
 function f(x) {
   return x;
 }
 
-registerValue("/input.js", "f", f);
-registerExport("/input.js", "f", "f");
-return registerValue("/input.js", "f", f);
+doRegisterValue("/input.js", "f", f);
+doRegisterExport("/input.js", "f", "f");
+return doRegisterValue("/input.js", "f", f);
 // ---
 const x = 1;
-registerValue("/input.js", "x", x);
-return registerExport("/input.js", "x", "x");
+doRegisterValue("/input.js", "x", x);
+return doRegisterExport("/input.js", "x", "x");
 // ---
 const x = 1;
-registerValue("/input.js", "x", x);
+doRegisterValue("/input.js", "x", x);
 const y = 2;
-registerValue("/input.js", "y", y);
-registerExport("/input.js", "y", "y");
-return registerExport("/input.js", "x", "x");
+doRegisterValue("/input.js", "y", y);
+doRegisterExport("/input.js", "y", "y");
+return doRegisterExport("/input.js", "x", "x");
 // ---
 const x = 1;
-registerValue("/input.js", "x", x);
+doRegisterValue("/input.js", "x", x);
 const y = 2;
-registerValue("/input.js", "y", y);
-registerExport("/input.js", "y", "y1");
-return registerExport("/input.js", "x", "x1");
+doRegisterValue("/input.js", "y", y);
+doRegisterExport("/input.js", "y", "y1");
+return doRegisterExport("/input.js", "x", "x1");
 // ---
 const x = 1;
-registerValue("/input.js", "x", x);
+doRegisterValue("/input.js", "x", x);
 const y = 2;
-registerValue("/input.js", "y", y);
-registerExport("/input.js", "y", "y");
-return registerExport("/input.js", "x", "x1");
+doRegisterValue("/input.js", "y", y);
+doRegisterExport("/input.js", "y", "y");
+return doRegisterExport("/input.js", "x", "x1");
 // ---
 const a = 1,
       b = 2,
       y = 3;
-registerValue("/input.js", "y", y);
-registerValue("/input.js", "b", b);
-registerValue("/input.js", "a", a);
-registerExport("/input.js", "y", "y");
-registerExport("/input.js", "x", "x1");
-registerExport("/input.js", "a", "a");
-return registerExport("/input.js", "b", "b");
+doRegisterValue("/input.js", "y", y);
+doRegisterValue("/input.js", "b", b);
+doRegisterValue("/input.js", "a", a);
+doRegisterExport("/input.js", "y", "y");
+doRegisterExport("/input.js", "x", "x1");
+doRegisterExport("/input.js", "a", "a");
+return doRegisterExport("/input.js", "b", "b");
 // ---
-return registerExport("/input.js", "x", "x var");
+return doRegisterExport("/input.js", "x", "x var");
 // ---
 const x = 1;
-registerValue("/input.js", "x", x);
-registerValue("/input.js", "x", x);
-return registerDefaultExport("/input.js", "x");
+doRegisterValue("/input.js", "x", x);
+doRegisterValue("/input.js", "x", x);
+return doRegisterDefaultExport("/input.js", "x");
 // ---
 class C {}
 
-registerValue("/input.js", "C", C);
-registerDefaultExport("/input.js", "C");
-return registerValue("/input.js", "C", C);
+doRegisterValue("/input.js", "C", C);
+doRegisterDefaultExport("/input.js", "C");
+return doRegisterValue("/input.js", "C", C);
 // ---
 function f() {}
 
-registerValue("/input.js", "f", f);
-registerDefaultExport("/input.js", "f");
-return registerValue("/input.js", "f", f);
+doRegisterValue("/input.js", "f", f);
+doRegisterDefaultExport("/input.js", "f");
+return doRegisterValue("/input.js", "f", f);
 // ---
 function* gen() {}
 
-registerValue("/input.js", "gen", gen);
-registerDefaultExport("/input.js", "gen");
-return registerValue("/input.js", "gen", gen);
+doRegisterValue("/input.js", "gen", gen);
+doRegisterDefaultExport("/input.js", "gen");
+return doRegisterValue("/input.js", "gen", gen);
 // ---
 class __defaultExport1 {}
 
-registerValue("/input.js", "__defaultExport1", __defaultExport1);
-return registerDefaultExport("/input.js", "__defaultExport1");
+doRegisterValue("/input.js", "__defaultExport1", __defaultExport1);
+return doRegisterDefaultExport("/input.js", "__defaultExport1");
 // ---
 function __defaultExport2() {}
 
-registerValue("/input.js", "__defaultExport2", __defaultExport2);
-return registerDefaultExport("/input.js", "__defaultExport2");
+doRegisterValue("/input.js", "__defaultExport2", __defaultExport2);
+return doRegisterDefaultExport("/input.js", "__defaultExport2");
 // ---
 function* __defaultExport3() {}
 
-registerValue("/input.js", "__defaultExport3", __defaultExport3);
-return registerDefaultExport("/input.js", "__defaultExport3");
+doRegisterValue("/input.js", "__defaultExport3", __defaultExport3);
+return doRegisterDefaultExport("/input.js", "__defaultExport3");

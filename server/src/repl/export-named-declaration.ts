@@ -1,82 +1,76 @@
 import * as t from "@babel/types";
 import { NodePath, PluginPass } from "@babel/core";
-import { extractFileName, debug } from "./utils";
+import { extractFileName, DEBUG } from "./utils";
 import _ from "lodash";
-import { registerExport, registerValue } from "./state";
+import { registerValue, registerExport } from "./state";
 
 export function exportNamedDeclaration(
   path: NodePath<t.ExportNamedDeclaration>,
   state: PluginPass
 ) {
   const fileName = extractFileName(state);
+
   // E.g. `export { x, y as y1 }`
   if (path.node.specifiers.length > 0) {
     for (const specifier of path.node.specifiers || []) {
       if (specifier.type !== "ExportSpecifier") continue;
 
-      const registerExportExpr = t.expressionStatement(
-        t.callExpression(t.identifier(registerExport.name), [
-          t.stringLiteral(fileName),
-          t.stringLiteral(specifier.local.name),
-          specifier.exported.type === "StringLiteral"
-            ? specifier.exported
-            : t.stringLiteral(specifier.exported.name),
-        ])
+      const exportAs =
+        specifier.exported.type === "StringLiteral"
+          ? specifier.exported.value
+          : specifier.exported.name;
+      path.insertAfter(
+        registerExport(fileName, specifier.local.name, exportAs)
       );
-      path.insertAfter(registerExportExpr);
     }
     path.remove();
     return;
   }
 
-  // E.g. export const x = 1, y = 2, z = 3;
+  // Process exports that have multiple lines of declarations
+  // See examples below
   const topDeclaration = path.node.declaration;
   if (
     t.isVariableDeclaration(topDeclaration) &&
     topDeclaration.declarations.length > 0
   ) {
     for (const declaration of topDeclaration.declarations) {
+      // E.g.
+      // const o = { x: 1, y: 2 };
+      // export const { x, y: y1 } = o;
+      if (t.isObjectPattern(declaration.id)) {
+        // TODO
+        // OR SHOULD I JUST FIND A WAY TO MAKE IT WORK WITH BINDINGS
+        continue;
+      }
+
+      // E.g. export const x = 1, y = 2, z = 3;
       const id = declaration.id as t.Identifier;
-      const registerValueExpr = t.expressionStatement(
-        t.callExpression(t.identifier(registerValue.name), [
-          t.stringLiteral(fileName),
-          t.stringLiteral(id.name),
-          id,
-        ])
-      );
-      const registerExportExpr = t.expressionStatement(
-        t.callExpression(t.identifier(registerExport.name), [
-          t.stringLiteral(fileName),
-          t.stringLiteral(id.name),
-          t.stringLiteral(id.name),
-        ])
-      );
-      path.insertAfter([registerValueExpr, registerExportExpr]);
+      path.insertAfter([
+        registerValue(fileName, id.name, id),
+        registerExport(fileName, id.name, id.name),
+      ]);
     }
     path.replaceWith(topDeclaration);
     return;
   }
 
+  // Note that we can't process these things via bindings:
+  // export const x = 1, y = 2, z = 3
+  // because only x is available as a binding
+
   // E.g. export const x = 1;
   const scope = path.scope;
   for (const [bindingKey, binding] of Object.entries(scope.bindings)) {
-    const registerValueExpr = t.expressionStatement(
-      t.callExpression(t.identifier(registerValue.name), [
-        t.stringLiteral(fileName),
-        t.stringLiteral(binding.identifier.name),
-        binding.identifier,
-      ])
-    );
-    const registerExportExpr = t.expressionStatement(
-      t.callExpression(t.identifier(registerExport.name), [
-        t.stringLiteral(fileName),
-        t.stringLiteral(binding.identifier.name),
-        t.stringLiteral(binding.identifier.name),
-      ])
-    );
-
+    // console.log("BINDING", bindingKey);
     const parent = binding.path.parentPath;
-    parent?.insertAfter([registerValueExpr, registerExportExpr]);
+
+    const { identifier } = binding;
+    const { name } = identifier;
+    parent?.insertAfter([
+      registerValue(fileName, name, identifier),
+      registerExport(fileName, name, name),
+    ]);
 
     // TODO When is path.node.declaration undefined?
     if (path.node.declaration) path.replaceWith(path.node.declaration);

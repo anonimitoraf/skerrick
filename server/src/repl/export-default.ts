@@ -2,7 +2,7 @@ import * as t from "@babel/types";
 import { NodePath, PluginPass } from "@babel/core";
 import { extractFileName } from "./utils";
 import _ from "lodash";
-import { registerDefaultExport, registerValue } from "./state";
+import { doRegisterDefaultExport, doRegisterValue } from "./state";
 
 export function exportDefault(
   path: NodePath<t.ExportDefaultDeclaration>,
@@ -29,14 +29,14 @@ export function exportDefault(
   }
 
   const registerValueExpr = t.expressionStatement(
-    t.callExpression(t.identifier(registerValue.name), [
+    t.callExpression(t.identifier(doRegisterValue.name), [
       t.stringLiteral(fileName),
       t.stringLiteral(local.name),
       local,
     ])
   );
   const registerDefaultExportExpr = t.expressionStatement(
-    t.callExpression(t.identifier(registerDefaultExport.name), [
+    t.callExpression(t.identifier(doRegisterDefaultExport.name), [
       t.stringLiteral(fileName),
       t.stringLiteral(local.name),
     ])

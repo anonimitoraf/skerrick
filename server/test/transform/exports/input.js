@@ -56,3 +56,6 @@ export default class {}
 export default function () {}
 // ---
 export default function* () {}
+// ---
+// FAILING
+// export { x as default };

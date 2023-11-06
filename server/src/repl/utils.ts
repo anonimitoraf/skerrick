@@ -13,7 +13,7 @@ export function unexpected(thing: string) {
 }
 
 const enabled = ["transform", "evaluate"];
-export function debug(type: string, ...msg: any[]) {
+export function DEBUG(type: string, ...msg: any[]) {
   if (!enabled.includes(type)) return;
   console.debug(...msg);
 }

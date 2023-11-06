@@ -40,6 +40,8 @@ export { x as x1, y };
 export { a };
 export { b };
 // ---
+export { x as "x var" };
+// ---
 const x = 1;
 export default x;
 // ---

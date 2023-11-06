@@ -74,6 +74,8 @@ registerExport("/input.js", "x", "x1");
 registerExport("/input.js", "a", "a");
 return registerExport("/input.js", "b", "b");
 // ---
+return registerExport("/input.js", "x", "x var");
+// ---
 const x = 1;
 registerValue("/input.js", "x", x);
 registerValue("/input.js", "x", x);

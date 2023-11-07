@@ -55,22 +55,8 @@ export function exportNamedDeclaration(
     return;
   }
 
-  // Note that we can't process these things via bindings:
-  // export const x = 1, y = 2, z = 3
-  // because only x is available as a binding
-
-  // E.g. export const x = 1;
-  const scope = path.scope;
-  for (const [bindingKey, binding] of Object.entries(scope.bindings)) {
-    // console.log("BINDING", bindingKey);
-    const parent = binding.path.parentPath;
-
-    const { identifier } = binding;
-    const { name } = identifier;
-    parent?.insertAfter([
-      registerValue(fileName, name, identifier),
-      registerExport(fileName, name, name),
-    ]);
+  return unexpected("Unhandled ExportNamedDeclaration case");
+}
 
     // TODO When is path.node.declaration undefined?
     if (path.node.declaration) path.replaceWith(path.node.declaration);

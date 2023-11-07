@@ -2,7 +2,12 @@ import * as t from "@babel/types";
 import { NodePath, PluginPass } from "@babel/core";
 import { extractFileName, DEBUG, unexpected } from "./utils";
 import _ from "lodash";
-import { registerValue, registerExport } from "./state";
+import {
+  registerValue,
+  registerExport,
+  symbols,
+  registerDefaultExport,
+} from "./state";
 import { Identifier } from "typescript";
 
 export function exportNamedDeclaration(
@@ -15,7 +20,17 @@ export function exportNamedDeclaration(
   if (path.node.specifiers.length > 0) {
     for (const specifier of path.node.specifiers || []) {
       if (specifier.type !== "ExportSpecifier") continue;
-
+      // E.g. export { x as default }
+      if (
+        specifier.exported.type === "Identifier" &&
+        specifier.exported.name === "default"
+      ) {
+        path.insertAfter(registerDefaultExport(fileName, specifier.local.name));
+        continue;
+      }
+      // E.g.
+      // export { x as x1 }
+      // export { x as "x one"}
       const exportAs =
         specifier.exported.type === "StringLiteral"
           ? specifier.exported.value

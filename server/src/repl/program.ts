@@ -34,7 +34,6 @@ export function program(
     // const x = 10;
     // <inserted here>
     // ```
-    DEBUG("transform", parent.type);
     if (parent.type === "Program") {
       binding.path.insertAfter(regValue);
     } else {

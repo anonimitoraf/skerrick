@@ -113,3 +113,5 @@ function* __defaultExport3() {}
 
 doRegisterValue("/input.js", "__defaultExport3", __defaultExport3);
 return doRegisterDefaultExport("/input.js", "__defaultExport3");
+// ---
+return doRegisterDefaultExport("/input.js", "x");

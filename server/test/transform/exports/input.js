@@ -57,5 +57,4 @@ export default function () {}
 // ---
 export default function* () {}
 // ---
-// FAILING
-// export { x as default };
+export { x as default };

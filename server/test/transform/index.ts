@@ -22,7 +22,8 @@ for (const dir of dirs) {
       try {
         return transform("/input.js", code);
       } catch (e) {
-        return e.stack || e.message;
+        const err = e.stack || e.message;
+        return `${code}\n${err}`;
       }
     })
     .join("\n" + delimiter + "\n");

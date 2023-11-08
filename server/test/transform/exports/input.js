@@ -2,6 +2,7 @@ export const x = 1;
 // ---
 export const x = 1, y = 2;
 // ---
+function g() {}
 export function f () {}
 // ---
 export class C { }

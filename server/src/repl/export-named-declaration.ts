@@ -43,33 +43,47 @@ export function exportNamedDeclaration(
     return;
   }
 
-  // Process exports that have multiple lines of declarations. See examples below
-  const topDeclaration = path.node.declaration;
-  if (
-    t.isVariableDeclaration(topDeclaration) &&
-    topDeclaration.declarations.length > 0
-  ) {
-    for (const declaration of topDeclaration.declarations) {
-      const id = declaration.id as t.Identifier;
-      // E.g.
-      // const o = { x: 1, y: 2 };
-      // export const { x, y: y1 } = o;
-      if (t.isObjectPattern(declaration.id)) {
-        processObjectPattern(fileName, path, declaration.id);
-        continue;
+  const declaration = path.node.declaration;
+  switch (declaration?.type) {
+    case "VariableDeclaration": {
+      // Process exports that have multiple lines of declarations. See examples below
+      for (const childDeclaration of declaration.declarations) {
+        const id = childDeclaration.id as t.Identifier;
+        // E.g.
+        // const o = { x: 1, y: 2 };
+        // export const { x, y: y1 } = o;
+        if (t.isObjectPattern(childDeclaration.id)) {
+          processObjectPattern(fileName, path, childDeclaration.id);
+          continue;
+        }
+
+        // E.g. export const x = 1, y = 2, z = 3;
+        path.insertAfter([
+          registerValue(fileName, id.name, id),
+          registerExport(fileName, id.name, id.name),
+        ]);
       }
-
-      // E.g. export const x = 1, y = 2, z = 3;
-      path.insertAfter([
-        registerValue(fileName, id.name, id),
-        registerExport(fileName, id.name, id.name),
-      ]);
+      path.replaceWith(declaration);
+      return;
     }
-    path.replaceWith(topDeclaration);
-    return;
+    // E.g. export Class C {};
+    case "ClassDeclaration":
+    // E.g. export function f () {};
+    case "FunctionDeclaration": {
+      if (!declaration.id)
+        return unexpected("No declaration ID for: " + declaration?.type);
+      path.insertAfter([
+        registerValue(fileName, declaration.id.name, declaration.id),
+        registerExport(fileName, declaration.id.name, declaration.id.name),
+      ]);
+      path.replaceWith(declaration);
+      return;
+    }
+    default:
+      return unexpected(
+        "Unhandled ExportNamedDeclaration case: " + declaration?.type
+      );
   }
-
-  return unexpected("Unhandled ExportNamedDeclaration case");
 }
 
 function processObjectPattern(

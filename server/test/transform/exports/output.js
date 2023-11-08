@@ -12,6 +12,10 @@ doRegisterExport("/input.js", "x", "x");
 doRegisterValue("/input.js", "y", y);
 return doRegisterValue("/input.js", "x", x);
 // ---
+function g() {}
+
+doRegisterValue("/input.js", "g", g);
+
 function f() {}
 
 doRegisterValue("/input.js", "f", f);

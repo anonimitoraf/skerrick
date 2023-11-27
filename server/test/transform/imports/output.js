@@ -8,3 +8,8 @@ doRegisterImport("/input.js", "G", "/somewhere", "g");
 doRegisterImport("/input.js", "f", "/somewhere", "f");
 return doRegisterDefaultImport("/input.js", "defaultExport", "/somewhere");
 // ---
+return doRegisterNamespaceImport("/input.js", "a", "module-name");
+// ---
+doRegisterNamespaceImport("/input.js", "name", "module-name");
+return doRegisterDefaultImport("/input.js", "defaultExport", "module-name");
+// ---

@@ -75,6 +75,20 @@ function doRegisterDefaultImport(
   values[localName] = exportsValues[symbols.defaultExport];
 }
 
+function doRegisterNamespaceImport(
+  namespace: string,
+  localNamespaceName: string,
+  importedNamespace: string
+) {
+  const exportsOfImportedNamespace = objGet(
+    exportsLookup,
+    importedNamespace,
+    {}
+  );
+  const values = objGet(valuesLookup, namespace, {});
+  values[localNamespaceName] = exportsOfImportedNamespace;
+}
+
 /** Mutates the context so that it has globals and other important members */
 export function configureContext(context: Record<string | symbol, any>) {
   // Configure context
@@ -85,6 +99,7 @@ export function configureContext(context: Record<string | symbol, any>) {
   context[doRegisterDefaultExport.name] = doRegisterDefaultExport;
   context[doRegisterImport.name] = doRegisterImport;
   context[doRegisterDefaultImport.name] = doRegisterDefaultImport;
+  context[doRegisterNamespaceImport.name] = doRegisterNamespaceImport;
 }
 
 export function nonGlobals(context: Record<string | symbol, any> = {}) {
@@ -157,6 +172,20 @@ export function registerDefaultImport(
     t.callExpression(t.identifier(doRegisterDefaultImport.name), [
       t.stringLiteral(namespace),
       t.stringLiteral(localName),
+      t.stringLiteral(importedNamespace),
+    ])
+  );
+}
+
+export function registerNamespaceImport(
+  namespace: string,
+  localNamespaceName: string,
+  importedNamespace: string
+) {
+  return t.expressionStatement(
+    t.callExpression(t.identifier(doRegisterNamespaceImport.name), [
+      t.stringLiteral(namespace),
+      t.stringLiteral(localNamespaceName),
       t.stringLiteral(importedNamespace),
     ])
   );

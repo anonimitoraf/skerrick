@@ -1,7 +1,11 @@
 import { NodePath, PluginPass } from "@babel/core";
 import * as t from "@babel/types";
-import { registerDefaultImport, registerImport } from "./state";
-import { extractFileName } from "./utils";
+import {
+  registerDefaultImport,
+  registerImport,
+  registerNamespaceImport,
+} from "./state";
+import { extractFileName, unexpected } from "./utils";
 
 export function importDeclaration(
   path: NodePath<t.ImportDeclaration>,
@@ -37,6 +41,18 @@ export function importDeclaration(
         );
         continue;
       }
+      case "ImportNamespaceSpecifier": {
+        path.insertAfter(
+          registerNamespaceImport(
+            fileName,
+            specifier.local.name,
+            path.node.source.value
+          )
+        );
+        continue;
+      }
+      default:
+        return unexpected(`specifier type ${(specifier as any).type}`);
     }
   }
   path.remove();

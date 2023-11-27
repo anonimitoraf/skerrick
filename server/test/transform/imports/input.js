@@ -4,7 +4,9 @@ import defaultExport from "module-name";
 // ---
 import defaultExport, { f, g as G } from "/somewhere";
 // // ---
-// import * as a from "module-name";
+import * as a from "module-name";
+// // ---
+import defaultExport, * as name from "module-name";
 // // ---
 // import { a } from "module-name";
 // // ---
@@ -19,8 +21,6 @@ import defaultExport, { f, g as G } from "/somewhere";
 // import { "string name" as alias } from "module-name";
 // // ---
 // import defaultExport, { export1 } from "module-name";
-// // ---
-// import defaultExport, * as name from "module-name";
 // // ---
 // import "module-name";
 // // ---

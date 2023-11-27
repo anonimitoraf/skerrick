@@ -10,5 +10,6 @@ import defaultExport, * as name from "module-name";
 // ---
 import { default as alias } from "module-name";
 // ---
+// NOT YET IMPLEMENTED
 // import "module-name";
 // ---

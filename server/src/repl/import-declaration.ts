@@ -12,8 +12,13 @@ export function importDeclaration(
   state: PluginPass
 ) {
   const fileName = extractFileName(state);
+  // E.g. import 'module'
+  if (path.node.specifiers.length < 1) {
+    // TODO What to do with side-effect importing?
+    return;
+  }
 
-  // TODO Deal with built-ins
+  // TODO Deal with built-ins when evaluating
   for (const specifier of path.node.specifiers) {
     switch (specifier.type) {
       case "ImportSpecifier": {

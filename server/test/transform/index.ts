@@ -3,9 +3,9 @@ import fs from "fs";
 import { transform } from "../../src/repl/transform";
 
 const dirs = [
-  // "basic",
+  "basic",
   "exports",
-  // "imports",
+  "imports",
   // "failing-tests",
 ];
 

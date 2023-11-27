@@ -7,6 +7,7 @@ import { configureContext, nonGlobals, valuesLookup } from "./state";
 import { exportDefault } from "./export-default";
 import { program } from "./program";
 import { expressionStatement } from "./expression-statement";
+import { importDeclaration } from "./import-declaration";
 
 // --- Transformation ---
 
@@ -28,6 +29,7 @@ function transformer() {
       ExpressionStatement: expressionStatement,
       ExportNamedDeclaration: exportNamedDeclaration,
       ExportDefaultDeclaration: exportDefault,
+      ImportDeclaration: importDeclaration,
     },
   });
 }

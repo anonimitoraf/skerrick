@@ -8,7 +8,9 @@ export const symbols = {
 type NS = string;
 type Lookup = Record<string | symbol, any>;
 
+/** This map gets used as the context during evaluation */
 export const valuesLookup = new Map<NS, Lookup>();
+/** This map gets looked up when an import is specified */
 export const exportsLookup = new Map<NS, Lookup>();
 
 function doRegisterValue(namespace: string, key: string, value: any) {
@@ -24,7 +26,7 @@ function doRegisterExport(namespace: string, local: string, exported: string) {
 
   const values = valuesLookup.get(namespace) || {};
   if (!(local in values)) {
-    console.error("Failed named export due to missing local", local);
+    throw new Error(`Failed named export due to missing local ${local}`);
   }
 
   exportsValues[exported] = values[local];
@@ -37,11 +39,30 @@ function doRegisterDefaultExport(namespace: string, local: string) {
 
   const values = valuesLookup.get(namespace) || {};
   if (!(local in values)) {
-    console.error("Failed default export due to missing local", local);
+    throw new Error(`Failed default export due to missing local ${local}`);
   }
 
   exportsValues[symbols.defaultExport] = values[local];
   return symbols.defaultExport.toString();
+}
+
+function doRegisterImport(
+  namespace: string,
+  localName: string,
+  importedNamespace: string,
+  importedName: string
+) {
+  const exportsValues = exportsLookup.get(importedNamespace) || {};
+  exportsLookup.set(namespace, exportsValues);
+
+  if (!(importedName in exportsValues)) {
+    throw new Error(
+      `Failed import due to missing export ${importedName} from namespace ${importedNamespace}`
+    );
+  }
+
+  const values = valuesLookup.get(namespace) || {};
+  values[localName] = exportsValues[importedName];
 }
 
 /** Mutates the context so that it has globals and other important members */
@@ -52,6 +73,7 @@ export function configureContext(context: Record<string | symbol, any>) {
   }
   context[doRegisterValue.name] = doRegisterValue;
   context[doRegisterDefaultExport.name] = doRegisterDefaultExport;
+  context[doRegisterImport.name] = doRegisterImport;
 }
 
 export function nonGlobals(context: Record<string | symbol, any> = {}) {
@@ -95,6 +117,22 @@ export function registerExport(
       t.stringLiteral(fileName),
       t.stringLiteral(key),
       t.stringLiteral(exportAs),
+    ])
+  );
+}
+
+export function registerImport(
+  namespace: string,
+  localName: string,
+  importedNamespace: string,
+  importedName: string
+) {
+  return t.expressionStatement(
+    t.callExpression(t.identifier(doRegisterImport.name), [
+      t.stringLiteral(namespace),
+      t.stringLiteral(localName),
+      t.stringLiteral(importedNamespace),
+      t.stringLiteral(importedName),
     ])
   );
 }

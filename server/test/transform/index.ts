@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs";
-import { transform } from "../../src/repl/engine";
+import { transform } from "../../src/repl/transform";
 
 const dirs = [
   // "basic",

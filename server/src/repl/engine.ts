@@ -2,12 +2,12 @@ import vm from "vm";
 import _ from "lodash";
 import * as babel from "@babel/core";
 import { DEBUG } from "./utils";
-import { exportNamedDeclaration } from "./export-named-declaration";
+import { exportNamedDeclaration } from "./transform/export-named-declaration";
 import { configureContext, nonGlobals, valuesLookup } from "./state";
-import { exportDefault } from "./export-default";
-import { program } from "./program";
-import { expressionStatement } from "./expression-statement";
-import { importDeclaration } from "./import-declaration";
+import { exportDefault } from "./transform/export-default";
+import { program } from "./transform/program";
+import { expressionStatement } from "./transform/expression-statement";
+import { importDeclaration } from "./transform/import-declaration";
 
 // --- Transformation ---
 

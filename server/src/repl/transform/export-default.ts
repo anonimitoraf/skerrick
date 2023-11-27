@@ -1,8 +1,8 @@
 import * as t from "@babel/types";
 import { NodePath, PluginPass } from "@babel/core";
-import { extractFileName } from "./utils";
+import { extractFileName } from "../utils";
 import _ from "lodash";
-import { registerDefaultExport, registerValue } from "./state";
+import { registerDefaultExport, registerValue } from "../state";
 
 export function exportDefault(
   path: NodePath<t.ExportDefaultDeclaration>,

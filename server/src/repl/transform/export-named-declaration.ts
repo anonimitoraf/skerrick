@@ -1,13 +1,13 @@
 import * as t from "@babel/types";
 import { NodePath, PluginPass } from "@babel/core";
-import { extractFileName, DEBUG, unexpected } from "./utils";
+import { extractFileName, DEBUG, unexpected } from "../utils";
 import _ from "lodash";
 import {
   registerValue,
   registerExport,
   symbols,
   registerDefaultExport,
-} from "./state";
+} from "../state";
 import { Identifier } from "typescript";
 
 export function exportNamedDeclaration(

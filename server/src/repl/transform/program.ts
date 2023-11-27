@@ -1,7 +1,7 @@
 import * as t from "@babel/types";
 import { NodePath, PluginPass } from "@babel/core";
-import { DEBUG, extractFileName } from "./utils";
-import { registerValue } from "./state";
+import { DEBUG, extractFileName } from "../utils";
+import { registerValue } from "../state";
 
 export function program(
   path: NodePath<t.ExportDefaultDeclaration>,

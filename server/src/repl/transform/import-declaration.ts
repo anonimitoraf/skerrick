@@ -4,8 +4,8 @@ import {
   registerDefaultImport,
   registerImport,
   registerNamespaceImport,
-} from "./state";
-import { extractFileName, unexpected } from "./utils";
+} from "../state";
+import { extractFileName, unexpected } from "../utils";
 
 export function importDeclaration(
   path: NodePath<t.ImportDeclaration>,

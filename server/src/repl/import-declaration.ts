@@ -21,14 +21,24 @@ export function importDeclaration(
           specifier.imported.type === "StringLiteral"
             ? specifier.imported.value
             : specifier.imported.name;
-        path.insertAfter(
-          registerImport(
-            fileName,
-            specifier.local.name,
-            path.node.source.value,
-            importedName
-          )
-        );
+        if (importedName === "default") {
+          path.insertAfter(
+            registerDefaultImport(
+              fileName,
+              specifier.local.name,
+              path.node.source.value
+            )
+          );
+        } else {
+          path.insertAfter(
+            registerImport(
+              fileName,
+              specifier.local.name,
+              path.node.source.value,
+              importedName
+            )
+          );
+        }
         continue;
       }
       case "ImportDefaultSpecifier": {

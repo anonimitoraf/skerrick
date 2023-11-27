@@ -8,11 +8,7 @@ import * as a from "module-name";
 // // ---
 import defaultExport, * as name from "module-name";
 // // ---
-// import { a } from "module-name";
-// // ---
-// import { a as A } from "module-name";
-// // ---
-// import { default as alias } from "module-name";
+import { default as alias } from "module-name";
 // // ---
 // import { a, b } from "module-name";
 // // ---

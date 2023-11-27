@@ -13,3 +13,5 @@ return doRegisterNamespaceImport("/input.js", "a", "module-name");
 doRegisterNamespaceImport("/input.js", "name", "module-name");
 return doRegisterDefaultImport("/input.js", "defaultExport", "module-name");
 // ---
+return doRegisterDefaultImport("/input.js", "alias", "module-name");
+// ---

@@ -1,30 +1,28 @@
 import * as t from "@babel/types";
+import { objGet } from "./utils";
 
 export const symbols = {
   defaultExport: Symbol("[[defaultExport]]"),
   namespaceExport: Symbol("[[namespaceExport]]"),
 };
 
-type NS = string;
-type Lookup = Record<string | symbol, any>;
+type Lookup<TVal = any> = Record<string | symbol, TVal>;
 
-/** This map gets used as the context during evaluation */
-export const valuesLookup = new Map<NS, Lookup>();
-/** This map gets looked up when an import is specified */
-export const exportsLookup = new Map<NS, Lookup>();
+/** This lookup gets used as the context during evaluation */
+export const valuesLookup: Lookup<Lookup> = {};
+/** This lookup gets looked up when an import is specified */
+export const exportsLookup: Lookup<Lookup> = {};
 
 function doRegisterValue(namespace: string, key: string, value: any) {
-  const values = valuesLookup.get(namespace) || {};
-  valuesLookup.set(namespace, values);
+  const values = objGet(valuesLookup, namespace, {});
   values[key] = value;
   return value;
 }
 
 function doRegisterExport(namespace: string, local: string, exported: string) {
-  const exportsValues = exportsLookup.get(namespace) || {};
-  exportsLookup.set(namespace, exportsValues);
+  const exportsValues = objGet(exportsLookup, namespace, {});
 
-  const values = valuesLookup.get(namespace) || {};
+  const values = objGet(valuesLookup, namespace, {});
   if (!(local in values)) {
     throw new Error(`Failed named export due to missing local ${local}`);
   }
@@ -34,10 +32,8 @@ function doRegisterExport(namespace: string, local: string, exported: string) {
 }
 
 function doRegisterDefaultExport(namespace: string, local: string) {
-  const exportsValues = exportsLookup.get(namespace) || {};
-  exportsLookup.set(namespace, exportsValues);
-
-  const values = valuesLookup.get(namespace) || {};
+  const exportsValues = objGet(exportsLookup, namespace, {});
+  const values = objGet(valuesLookup, namespace, {});
   if (!(local in values)) {
     throw new Error(`Failed default export due to missing local ${local}`);
   }
@@ -52,16 +48,14 @@ function doRegisterImport(
   importedNamespace: string,
   importedName: string
 ) {
-  const exportsValues = exportsLookup.get(importedNamespace) || {};
-  exportsLookup.set(namespace, exportsValues);
-
+  const exportsValues = objGet(exportsLookup, importedNamespace, {});
   if (!(importedName in exportsValues)) {
     throw new Error(
       `Failed import due to missing export ${importedName} from namespace ${importedNamespace}`
     );
   }
 
-  const values = valuesLookup.get(namespace) || {};
+  const values = objGet(valuesLookup, namespace, {});
   values[localName] = exportsValues[importedName];
 }
 
@@ -70,16 +64,14 @@ function doRegisterDefaultImport(
   localName: string,
   importedNamespace: string
 ) {
-  const exportsValues = exportsLookup.get(importedNamespace) || {};
-  exportsLookup.set(namespace, exportsValues);
-
+  const exportsValues = objGet(exportsLookup, importedNamespace, {});
   if (!(symbols.defaultExport in exportsValues)) {
     throw new Error(
       `Failed import due to missing default export from namespace ${importedNamespace}`
     );
   }
 
-  const values = valuesLookup.get(namespace) || {};
+  const values = objGet(valuesLookup, namespace, {});
   values[localName] = exportsValues[symbols.defaultExport];
 }
 

@@ -29,3 +29,13 @@ export function ancestorsAre(node: any, types: babel.Node["type"][]) {
   }
   return isSatisfied;
 }
+
+/** Tries to get key from obj. If it doesn't exist, sets the key's value to `defaultValue` and returns it */
+export function objGet(
+  obj: Record<string | symbol, any>,
+  key: string | symbol,
+  defaultValue: any
+) {
+  if (!(key in obj)) obj[key] = defaultValue;
+  return defaultValue;
+}

@@ -38,7 +38,7 @@ export function evaluate(namespace: string, code: string) {
   const codeTransformed = transform(namespace, code);
   DEBUG("transform", codeTransformed);
 
-  const context = valuesLookup.get(namespace) ?? {};
+  const context = valuesLookup[namespace] ?? {};
   configureContext(context);
 
   const result = vm.runInContext(
@@ -55,6 +55,6 @@ export function evaluate(namespace: string, code: string) {
     vm.createContext(context),
     { filename: namespace, displayErrors: true }
   );
-  DEBUG("evaluate", nonGlobals(valuesLookup.get(namespace)));
+  DEBUG("evaluate", nonGlobals(valuesLookup[namespace]));
   return result;
 }

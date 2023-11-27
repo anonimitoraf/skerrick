@@ -1,6 +1,6 @@
 import { NodePath, PluginPass } from "@babel/core";
 import * as t from "@babel/types";
-import { registerImport } from "./state";
+import { registerDefaultImport, registerImport } from "./state";
 import { extractFileName } from "./utils";
 
 export function importDeclaration(
@@ -23,6 +23,16 @@ export function importDeclaration(
             specifier.local.name,
             path.node.source.value,
             importedName
+          )
+        );
+        continue;
+      }
+      case "ImportDefaultSpecifier": {
+        path.insertAfter(
+          registerDefaultImport(
+            fileName,
+            specifier.local.name,
+            path.node.source.value
           )
         );
         continue;

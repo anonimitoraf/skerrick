@@ -65,6 +65,24 @@ function doRegisterImport(
   values[localName] = exportsValues[importedName];
 }
 
+function doRegisterDefaultImport(
+  namespace: string,
+  localName: string,
+  importedNamespace: string
+) {
+  const exportsValues = exportsLookup.get(importedNamespace) || {};
+  exportsLookup.set(namespace, exportsValues);
+
+  if (!(symbols.defaultExport in exportsValues)) {
+    throw new Error(
+      `Failed import due to missing default export from namespace ${importedNamespace}`
+    );
+  }
+
+  const values = valuesLookup.get(namespace) || {};
+  values[localName] = exportsValues[symbols.defaultExport];
+}
+
 /** Mutates the context so that it has globals and other important members */
 export function configureContext(context: Record<string | symbol, any>) {
   // Configure context
@@ -74,6 +92,7 @@ export function configureContext(context: Record<string | symbol, any>) {
   context[doRegisterValue.name] = doRegisterValue;
   context[doRegisterDefaultExport.name] = doRegisterDefaultExport;
   context[doRegisterImport.name] = doRegisterImport;
+  context[doRegisterDefaultImport.name] = doRegisterDefaultImport;
 }
 
 export function nonGlobals(context: Record<string | symbol, any> = {}) {
@@ -133,6 +152,20 @@ export function registerImport(
       t.stringLiteral(localName),
       t.stringLiteral(importedNamespace),
       t.stringLiteral(importedName),
+    ])
+  );
+}
+
+export function registerDefaultImport(
+  namespace: string,
+  localName: string,
+  importedNamespace: string
+) {
+  return t.expressionStatement(
+    t.callExpression(t.identifier(doRegisterDefaultImport.name), [
+      t.stringLiteral(namespace),
+      t.stringLiteral(localName),
+      t.stringLiteral(importedNamespace),
     ])
   );
 }

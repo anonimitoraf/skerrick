@@ -1,6 +1,8 @@
 import { f, g, h as H } from "/somewhere";
 // ---
-// import defaultExport from "module-name";
+import defaultExport from "module-name";
+// ---
+import defaultExport, { f, g as G } from "/somewhere";
 // // ---
 // import * as a from "module-name";
 // // ---

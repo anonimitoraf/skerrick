@@ -43,6 +43,7 @@ export function exportNamedDeclaration(
     return;
   }
 
+  // Otherwise, for single exports
   const declaration = path.node.declaration;
   switch (declaration?.type) {
     case "VariableDeclaration": {

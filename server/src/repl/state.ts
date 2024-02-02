@@ -48,6 +48,8 @@ function doRegisterImport(
   importedNamespace: string,
   importedName: string
 ) {
+  // TODO FIX THIS FUNCTION: REMEMBER THAT THIS RUNS AFTER THE
+  // VM CONTEXT HAS BEEN ESTABLISHED
   const exportsValues = objGet(exportsLookup, importedNamespace, {});
   if (!(importedName in exportsValues)) {
     throw new Error(

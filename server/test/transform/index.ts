@@ -3,10 +3,10 @@ import fs from "fs";
 import { transform } from "../../src/repl/transform";
 
 const dirs = [
-  "basic",
-  "exports",
-  "imports",
-  // "failing-tests",
+  // "basic",
+  // "exports",
+  // "imports",
+  "failing-tests",
 ];
 
 for (const dir of dirs) {

@@ -1,3 +1,4 @@
+import vm from "vm";
 import * as t from "@babel/types";
 import { objGet } from "./utils";
 
@@ -7,10 +8,20 @@ export const symbols = {
 };
 
 type Lookup<TVal = any> = Record<string | symbol, TVal>;
+const emptyLookup = (): Lookup => ({});
 
-/** This lookup gets used as the context during evaluation */
+/** Object used to resolve an imported value */
+class Import {
+  /** @param local is the local identifier in the `importedNamespace` */
+  constructor(
+    public importedNamespace: string,
+    public local: string | symbol
+  ) {}
+}
+
+/** Values by namespace */
 export const valuesLookup: Lookup<Lookup> = {};
-/** This lookup gets looked up when an import is specified */
+/** Exports by namespace */
 export const exportsLookup: Lookup<Lookup> = {};
 
 function doRegisterValue(namespace: string, key: string, value: any) {
@@ -48,17 +59,14 @@ function doRegisterImport(
   importedNamespace: string,
   importedName: string
 ) {
-  // TODO FIX THIS FUNCTION: REMEMBER THAT THIS RUNS AFTER THE
-  // VM CONTEXT HAS BEEN ESTABLISHED
-  const exportsValues = objGet(exportsLookup, importedNamespace, {});
-  if (!(importedName in exportsValues)) {
+  const importedNamespaceExports = objGet(exportsLookup, importedNamespace, {});
+  if (!(importedName in importedNamespaceExports)) {
     throw new Error(
       `Failed import due to missing export ${importedName} from namespace ${importedNamespace}`
     );
   }
-
   const values = objGet(valuesLookup, namespace, {});
-  values[localName] = exportsValues[importedName];
+  values[localName] = new Import(importedNamespace, importedName);
 }
 
 function doRegisterDefaultImport(
@@ -66,15 +74,14 @@ function doRegisterDefaultImport(
   localName: string,
   importedNamespace: string
 ) {
-  const exportsValues = objGet(exportsLookup, importedNamespace, {});
-  if (!(symbols.defaultExport in exportsValues)) {
+  const importedNamespaceExports = objGet(exportsLookup, importedNamespace, {});
+  if (!(symbols.defaultExport in importedNamespaceExports)) {
     throw new Error(
       `Failed import due to missing default export from namespace ${importedNamespace}`
     );
   }
-
   const values = objGet(valuesLookup, namespace, {});
-  values[localName] = exportsValues[symbols.defaultExport];
+  values[localName] = new Import(importedNamespace, symbols.defaultExport);
 }
 
 function doRegisterNamespaceImport(
@@ -91,17 +98,39 @@ function doRegisterNamespaceImport(
   values[localNamespaceName] = exportsOfImportedNamespace;
 }
 
-/** Mutates the context so that it has globals and other important members */
-export function configureContext(context: Record<string | symbol, any>) {
-  // Configure context
+/** Returns the context for the evaluation VM */
+export function generateContext(namespace: string) {
+  const base = Object.create(null);
   for (const k of Object.getOwnPropertyNames(global)) {
-    context[k] = global[k];
+    base[k] = global[k];
   }
-  context[doRegisterValue.name] = doRegisterValue;
-  context[doRegisterDefaultExport.name] = doRegisterDefaultExport;
-  context[doRegisterImport.name] = doRegisterImport;
-  context[doRegisterDefaultImport.name] = doRegisterDefaultImport;
-  context[doRegisterNamespaceImport.name] = doRegisterNamespaceImport;
+  base[doRegisterValue.name] = doRegisterValue;
+  base[doRegisterExport.name] = doRegisterExport;
+  base[doRegisterDefaultExport.name] = doRegisterDefaultExport;
+  base[doRegisterImport.name] = doRegisterImport;
+  base[doRegisterDefaultImport.name] = doRegisterDefaultImport;
+  base[doRegisterNamespaceImport.name] = doRegisterNamespaceImport;
+
+  const dynamicContext = new Proxy(base, {
+    get(target, prop) {
+      const values = objGet(valuesLookup, namespace, emptyLookup());
+      const value = values[prop];
+      if (prop in values) {
+        if (!(value instanceof Import)) return value;
+        // Otherwise, resolve an import
+        const exportsValues = objGet(
+          exportsLookup,
+          value.importedNamespace,
+          emptyLookup()
+        );
+        return exportsValues[value.local];
+      }
+      // Lastly, fallback to globals
+      return target[prop];
+    },
+    // TODO Also use `set` to conveniently update lookups?
+  });
+  return vm.createContext(dynamicContext);
 }
 
 export function nonGlobals(context: Record<string | symbol, any> = {}) {

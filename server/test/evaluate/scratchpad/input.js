@@ -1,8 +1,10 @@
-export const a = 10;
+import {
+  a,
+  b as B,
+  default as C,
+} from "/Users/raf/personal/skerrick/server/test/evaluate/scratchpad/input-1.js";
+import input1 from "/Users/raf/personal/skerrick/server/test/evaluate/scratchpad/input-1.js";
 
-const b = 200;
-export default b;
+const d = 4;
 
-console.log(require('path'));
-const print = require('a-native-example')
-print('hello world') // will print "hello world" from C++
+console.log({ a, B, C, d, input1 });

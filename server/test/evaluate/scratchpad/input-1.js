@@ -1,4 +1,6 @@
-export const a = 10;
+export const a = 1;
 
-const b = 200;
-export default b;
+export const b = 2;
+
+const c = 3;
+export default c;

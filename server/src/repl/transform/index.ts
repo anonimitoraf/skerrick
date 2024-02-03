@@ -24,7 +24,7 @@ function transformer() {
       ExpressionStatement: expressionStatement,
       ExportNamedDeclaration: exportNamedDeclaration,
       ExportDefaultDeclaration: exportDefault,
-      // ImportDeclaration: importDeclaration,
+      ImportDeclaration: importDeclaration,
     },
   });
 }

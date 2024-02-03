@@ -11,7 +11,7 @@ export function program(
 ) {
   const fileName = extractFileName(state);
   for (const [bindingKey, binding] of Object.entries(path.scope.bindings)) {
-    console.log("binding key", bindingKey);
+    // console.log("binding key", bindingKey);
     // NOTE: Imports are not bound/stored as values within the namespace. They are instead
     // resolved dynamically when evaluating code.
     if (

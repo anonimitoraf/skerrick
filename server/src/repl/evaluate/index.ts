@@ -1,17 +1,14 @@
 import path from "path";
 import vm from "vm";
-import { configureContext, nonGlobals, valuesLookup } from "../state";
+import { nonGlobals, valuesLookup, generateContext } from "../state";
 import { transform } from "../transform";
 import { DEBUG } from "../utils";
 import { createRequire } from "module";
 
 export function evaluate(namespace: string, code: string) {
   const codeTransformed = transform(namespace, code);
-  DEBUG("transform", codeTransformed);
 
-  const context = valuesLookup[namespace] ?? {};
-  configureContext(context);
-
+  const context = generateContext(namespace);
   const result = vm.runInContext(
     `
       (function () {
@@ -26,7 +23,6 @@ export function evaluate(namespace: string, code: string) {
     vm.createContext(context),
     { filename: namespace, displayErrors: true }
   );
-  DEBUG("evaluate", nonGlobals(valuesLookup[namespace]));
   return result;
 }
 

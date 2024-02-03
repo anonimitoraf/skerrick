@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs";
-import { evaluate } from "../../src/engine";
+import { evaluate } from "../../src/repl/evaluate";
 import { serve } from "../../src";
 
 const stopServer = serve();
@@ -48,7 +48,7 @@ const delimiter = "// ---";
         inputBlocksToEval.map((code) => {
           try {
             // `/` to force the filename to be treated as absolute
-            return evaluate(inputPath, code, true, isScratch);
+            return evaluate(inputPath, code);
           } catch (e) {
             return Promise.resolve(e.stack || e.message);
           }

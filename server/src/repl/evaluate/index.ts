@@ -9,6 +9,7 @@ export function evaluate(namespace: string, code: string) {
   const codeTransformed = transform(namespace, code);
 
   const context = generateContext(namespace);
+  // TODO Pass in generated 'require'
   const result = vm.runInContext(
     `
       (function () {
@@ -24,18 +25,4 @@ export function evaluate(namespace: string, code: string) {
     { filename: namespace, displayErrors: true }
   );
   return result;
-}
-
-/** `requireStub` is a custom implementation of NodeJS's require */
-function requireStub(namespaceToImport: string) {}
-
-// TODO Consolidate this with requireStub
-function generateRequire(namespace: string, namespaceToImport: string) {
-  const require = createRequire(namespace);
-
-  // TODO Document example of this
-  const fullImportPath = require.resolve(namespaceToImport);
-  const isBuiltIn = !path.isAbsolute(fullImportPath);
-  const result = require(fullImportPath);
-  if (isBuiltIn) return result;
 }

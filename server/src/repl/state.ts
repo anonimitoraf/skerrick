@@ -1,6 +1,7 @@
 import vm from "vm";
 import * as t from "@babel/types";
 import { objGet } from "./utils";
+import { resolveImportPath } from "./require";
 
 export const symbols = {
   defaultExport: Symbol("[[defaultExport]]"),
@@ -59,14 +60,22 @@ function doRegisterImport(
   importedNamespace: string,
   importedName: string
 ) {
-  const importedNamespaceExports = objGet(exportsLookup, importedNamespace, {});
+  const importedNamespaceResolved = resolveImportPath(
+    namespace,
+    importedNamespace
+  );
+  const importedNamespaceExports = objGet(
+    exportsLookup,
+    importedNamespaceResolved,
+    {}
+  );
   if (!(importedName in importedNamespaceExports)) {
     throw new Error(
-      `Failed import due to missing export ${importedName} from namespace ${importedNamespace}`
+      `Failed import due to missing export ${importedName} from namespace ${importedNamespaceResolved}`
     );
   }
   const values = objGet(valuesLookup, namespace, {});
-  values[localName] = new Import(importedNamespace, importedName);
+  values[localName] = new Import(importedNamespaceResolved, importedName);
 }
 
 function doRegisterDefaultImport(
@@ -74,14 +83,25 @@ function doRegisterDefaultImport(
   localName: string,
   importedNamespace: string
 ) {
-  const importedNamespaceExports = objGet(exportsLookup, importedNamespace, {});
+  const importedNamespaceResolved = resolveImportPath(
+    namespace,
+    importedNamespace
+  );
+  const importedNamespaceExports = objGet(
+    exportsLookup,
+    importedNamespaceResolved,
+    {}
+  );
   if (!(symbols.defaultExport in importedNamespaceExports)) {
     throw new Error(
-      `Failed import due to missing default export from namespace ${importedNamespace}`
+      `Failed import due to missing default export from namespace ${importedNamespaceResolved}`
     );
   }
   const values = objGet(valuesLookup, namespace, {});
-  values[localName] = new Import(importedNamespace, symbols.defaultExport);
+  values[localName] = new Import(
+    importedNamespaceResolved,
+    symbols.defaultExport
+  );
 }
 
 function doRegisterNamespaceImport(

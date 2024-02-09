@@ -2,6 +2,7 @@ import vm from "vm";
 import * as t from "@babel/types";
 import { objGet } from "./utils";
 import { resolveImportPath } from "./require";
+import path from "path";
 
 export const symbols = {
   defaultExport: Symbol("[[defaultExport]]"),
@@ -12,18 +13,21 @@ type Lookup<TVal = any> = Record<string | symbol, TVal>;
 const emptyLookup = (): Lookup => ({});
 
 /** Object used to resolve an imported value */
-class Import {
+export class Import {
   /** @param local is the local identifier in the `importedNamespace` */
   constructor(
+    public namespace: string,
     public importedNamespace: string,
     public local: string | symbol
   ) {}
 }
 
 /** Values by namespace */
-export const valuesLookup: Lookup<Lookup> = {};
+export let valuesLookup: Lookup<Lookup> = {};
+export const resetValuesLookup = () => (valuesLookup = {});
 /** Exports by namespace */
-export const exportsLookup: Lookup<Lookup> = {};
+export let exportsLookup: Lookup<Lookup> = {};
+export const resetExportsLookup = () => (exportsLookup = {});
 
 function doRegisterValue(namespace: string, key: string, value: any) {
   const values = objGet(valuesLookup, namespace, {});
@@ -75,7 +79,11 @@ function doRegisterImport(
     );
   }
   const values = objGet(valuesLookup, namespace, {});
-  values[localName] = new Import(importedNamespaceResolved, importedName);
+  values[localName] = new Import(
+    namespace,
+    importedNamespaceResolved,
+    importedName
+  );
 }
 
 function doRegisterDefaultImport(
@@ -99,6 +107,7 @@ function doRegisterDefaultImport(
   }
   const values = objGet(valuesLookup, namespace, {});
   values[localName] = new Import(
+    namespace,
     importedNamespaceResolved,
     symbols.defaultExport
   );

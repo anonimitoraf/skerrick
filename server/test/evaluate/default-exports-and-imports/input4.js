@@ -1,9 +1,14 @@
-import Foo from './input-3.js'
+import Foo from "./input3.js";
 
 const foo = new Foo();
 
 class Baz {
-  foo () { return foo; }
+  foo() {
+    return foo;
+  }
+  toString() {
+    return "[Instance Baz]";
+  }
 }
 
 /** Returns the bar of foo */

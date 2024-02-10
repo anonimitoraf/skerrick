@@ -24,6 +24,7 @@
 // ---
 4
 // ---
+
 // --- Environment ---
 const exports = {
   'input1.js': {

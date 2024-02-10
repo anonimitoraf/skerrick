@@ -19,9 +19,9 @@ const isScratch = process.argv[2] === "scratch";
 const dirs = isScratch
   ? ["scratchpad"]
   : [
-      // "basic",
+      "basic",
       "exports-and-imports",
-      // "default-exports-and-imports",
+      "default-exports-and-imports",
       // "imports-built-ins",
       // "commonjs",
       // "async",
@@ -76,29 +76,33 @@ const delimiter = "// ---";
         )
       );
 
-      const simplifyLookup = (lookup) =>
-        _(lookup)
-          .toPairs()
-          .map(([ns, values]) => [
-            path.basename(ns),
-            _(values)
-              .toPairs()
-              .map(([key, val]) => {
-                let valFormatted = val;
-                // Format imports into something like 'input1.js -> f1'
-                if (val instanceof Import)
-                  valFormatted = `${path.basename(
-                    val.importedNamespace
-                  )} :: ${val.local.toString()}`;
-                else if (typeof val === "function")
-                  valFormatted = `[Function ${val.name}]`;
-                return [key, valFormatted];
-              })
-              .fromPairs()
-              .value(),
-          ])
-          .fromPairs()
-          .value();
+      const simplifyLookup = (lookup) => {
+        const simplified = {};
+        for (const [ns, values] of Object.entries(lookup)) {
+          const formatValue = (value: any) => {
+            // Format imports into something like 'input1.js -> f1'
+            if (value instanceof Import)
+              return `${path.basename(
+                value.importedNamespace
+              )} :: ${value.local.toString()}`;
+            else if (typeof value === "function")
+              return `[Function ${value.name}]`;
+            else if (typeof value === "object" && value !== null)
+              return value.toString();
+            return value;
+          };
+          // Ensure that both string keys and symbol keys are incuded
+          for (const key of Object.getOwnPropertyNames(values)) {
+            const value = lookup[ns][key];
+            _.set(simplified, [path.basename(ns), key], formatValue(value));
+          }
+          for (const key of Object.getOwnPropertySymbols(values)) {
+            const value = lookup[ns][key];
+            _.set(simplified, [path.basename(ns), key], formatValue(value));
+          }
+        }
+        return simplified;
+      };
 
       const simplifiedValues = simplifyLookup(valuesLookup);
       const simplifiedExports = simplifyLookup(exportsLookup);
@@ -106,6 +110,7 @@ const delimiter = "// ---";
       fs.appendFileSync(
         outputPath,
         [
+          "",
           "// --- Environment ---",
           "const exports = " +
             util.inspect(simplifiedExports, { depth: Infinity }),

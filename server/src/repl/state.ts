@@ -2,11 +2,10 @@ import vm from "vm";
 import * as t from "@babel/types";
 import { objGet } from "./utils";
 import { resolveImportPath } from "./require";
-import path from "path";
 
 export const symbols = {
-  defaultExport: Symbol("[[defaultExport]]"),
-  namespaceExport: Symbol("[[namespaceExport]]"),
+  defaultExport: Symbol("defaultExport"),
+  namespaceExport: Symbol("namespaceExport"),
 };
 
 type Lookup<TVal = any> = Record<string | symbol, TVal>;

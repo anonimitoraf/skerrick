@@ -22,11 +22,11 @@ const dirs = isScratch
       "basic",
       "exports-and-imports",
       "default-exports-and-imports",
+      "async",
       // "imports-built-ins",
       // "commonjs",
-      // "async",
-      // "native-addons",
       // "dynamic-imports",
+      // "native-addons",
     ];
 
 const delimiter = "// ---";

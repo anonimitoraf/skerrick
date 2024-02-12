@@ -22,6 +22,7 @@ const dirs = isScratch
       "basic",
       "exports-and-imports",
       "default-exports-and-imports",
+      "namespace-exports-and-imports",
       "async",
       // "imports-built-ins",
       // "commonjs",

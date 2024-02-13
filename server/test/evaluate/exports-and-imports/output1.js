@@ -13,7 +13,7 @@ x1
 
 // --- Environment ---
 const exports = {
-  'input1.js': {
+  'exports-and-imports/input1.js': {
     f: '[Function f]',
     f1: '[Function f]',
     g: '[Function g]',
@@ -26,7 +26,7 @@ const exports = {
   }
 }
 const values = {
-  'input1.js': {
+  'exports-and-imports/input1.js': {
     f: '[Function f]',
     g: '[Function g]',
     h: '[Function h]',

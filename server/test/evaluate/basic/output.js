@@ -1,4 +1,4 @@
 42
 // --- Environment ---
 const exports = {}
-const values = { 'input.js': { x: 42 } }
+const values = { 'basic/input.js': { x: 42 } }

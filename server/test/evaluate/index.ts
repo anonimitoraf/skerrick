@@ -24,6 +24,7 @@ const dirs = isScratch
       "default-exports-and-imports",
       "namespace-exports-and-imports",
       "async",
+      // TODO Auto-eval all imports?
       // "imports-built-ins",
       // "commonjs",
       // "dynamic-imports",
@@ -92,14 +93,22 @@ const delimiter = "// ---";
               return value.toString();
             return value;
           };
-          // Ensure that both string keys and symbol keys are incuded
+          // Ensure that both string keys and symbol keys are included
           for (const key of Object.getOwnPropertyNames(values)) {
             const value = lookup[ns][key];
-            _.set(simplified, [path.basename(ns), key], formatValue(value));
+            _.set(
+              simplified,
+              [ns.split("/").slice(-2).join("/"), key],
+              formatValue(value)
+            );
           }
           for (const key of Object.getOwnPropertySymbols(values)) {
             const value = lookup[ns][key];
-            _.set(simplified, [path.basename(ns), key], formatValue(value));
+            _.set(
+              simplified,
+              [ns.split("/").slice(-2).join("/"), key],
+              formatValue(value)
+            );
           }
         }
         return simplified;

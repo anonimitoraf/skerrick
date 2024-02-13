@@ -117,9 +117,13 @@ function doRegisterNamespaceImport(
   localNamespaceName: string,
   importedNamespace: string
 ) {
+  const importedNamespaceResolved = resolveImportPath(
+    namespace,
+    importedNamespace
+  );
   const exportsOfImportedNamespace = objGet(
     exportsLookup,
-    importedNamespace,
+    importedNamespaceResolved,
     {}
   );
   const values = objGet(valuesLookup, namespace, {});

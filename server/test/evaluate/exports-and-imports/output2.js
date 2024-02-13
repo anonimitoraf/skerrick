@@ -27,7 +27,7 @@
 
 // --- Environment ---
 const exports = {
-  'input1.js': {
+  'exports-and-imports/input1.js': {
     f: '[Function f]',
     f1: '[Function f]',
     g: '[Function g]',
@@ -40,14 +40,14 @@ const exports = {
   }
 }
 const values = {
-  'input1.js': {
+  'exports-and-imports/input1.js': {
     f: '[Function f]',
     g: '[Function g]',
     h: '[Function h]',
     x: 1.5,
     y: 2
   },
-  'input2.js': {
+  'exports-and-imports/input2.js': {
     FFFFF1: 'input1.js :: f1',
     f: 'input1.js :: f',
     g2: 'input1.js :: g2',

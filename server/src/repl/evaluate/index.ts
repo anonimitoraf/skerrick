@@ -1,9 +1,6 @@
-import path from "path";
 import vm from "vm";
-import { nonGlobals, valuesLookup, generateContext } from "../state";
+import { generateContext } from "../state";
 import { transform } from "../transform";
-import { DEBUG } from "../utils";
-import { createRequire } from "module";
 
 export function evaluate(namespace: string, code: string) {
   const codeTransformed = transform(namespace, code);

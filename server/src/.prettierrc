@@ -1,0 +1,14 @@
+{
+  "bracketSpacing": true,
+  "jsxSingleQuote": true,
+  "printWidth": 80,
+  "quoteProps": "consistent",
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "all",
+  "plugins": ["prettier-plugin-jsdoc"],
+  "jsdocSingleLineComment": false,
+  "jsdocCapitalizeDescription": false,
+  "jsdocPreferCodeFences": true
+}

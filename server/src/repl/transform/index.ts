@@ -1,10 +1,11 @@
-import _ from "lodash";
-import * as babel from "@babel/core";
-import { exportNamedDeclaration } from "./export-named-declaration";
-import { exportDefault } from "./export-default";
-import { program } from "./program";
-import { expressionStatement } from "./expression-statement";
-import { importDeclaration } from "./import-declaration";
+import _ from 'lodash'
+import * as babel from '@babel/core'
+import { exportNamedDeclaration } from './export-named-declaration'
+import { exportDefault } from './export-default'
+import { program } from './program'
+import { expressionStatement } from './expression-statement'
+import { importDeclaration } from './import-declaration'
+import { assignmentExpression } from './assignment-expression'
 
 export function transform(namespace: string, code: string) {
   const output = babel.transformSync(code, {
@@ -13,8 +14,8 @@ export function transform(namespace: string, code: string) {
     parserOpts: {
       allowUndeclaredExports: true,
     },
-  });
-  return output?.code;
+  })
+  return output?.code
 }
 
 function transformer() {
@@ -25,6 +26,7 @@ function transformer() {
       ExportNamedDeclaration: exportNamedDeclaration,
       ExportDefaultDeclaration: exportDefault,
       ImportDeclaration: importDeclaration,
+      AssignmentExpression: assignmentExpression,
     },
-  });
+  })
 }

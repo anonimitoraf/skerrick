@@ -2,6 +2,7 @@ import vm from 'vm'
 import * as t from '@babel/types'
 import { objGet } from './utils'
 import { resolveImportPath } from './require'
+import _ from 'lodash'
 
 export const symbols = {
   defaultExport: Symbol('defaultExport'),
@@ -24,8 +25,8 @@ export class Import {
 /** Values by namespace */
 export let valuesLookup: Lookup<Lookup> = {}
 export const resetValuesLookup = () => (valuesLookup = {})
-/** Exports by namespace */
-export let exportsLookup: Lookup<Lookup> = {}
+/** Exports by namespace. The values of which are just identifiers */
+export let exportsLookup: Lookup<Lookup<string | symbol>> = {}
 export const resetExportsLookup = () => (exportsLookup = {})
 
 function doRegisterValue(namespace: string, key: string, value: any) {
@@ -49,10 +50,8 @@ export function doRegisterExport(
   if (!(local in values)) {
     throw new Error(`Failed named export due to missing local ${local}`)
   }
-
-  // TODO These values are actually not used. Instead we just use the exportsLookup to verify that
-  // a member is actually exported. Remove these
-  exportsValues[exported] = values[local]
+  exportsValues[exported] = local
+  // TODO Maybe prefix return with `exports.`?
   return exported
 }
 
@@ -62,10 +61,7 @@ function doRegisterDefaultExport(namespace: string, local: string) {
   if (!(local in values)) {
     throw new Error(`Failed default export due to missing local ${local}`)
   }
-
-  // TODO These values are actually not used. Instead we just use the exportsLookup to verify that
-  // a member is actually exported. Remove these
-  exportsValues[symbols.defaultExport] = values[local]
+  exportsValues[symbols.defaultExport] = local
   return symbols.defaultExport.toString()
 }
 
@@ -129,17 +125,32 @@ function doRegisterNamespaceImport(
   localNamespaceName: string,
   importedNamespace: string,
 ) {
-  const importedNamespaceResolved = resolveImportPath(
-    namespace,
-    importedNamespace,
-  )
-  const exportsOfImportedNamespace = objGet(
-    exportsLookup,
-    importedNamespaceResolved,
-    {},
-  )
   const values = objGet(valuesLookup, namespace, {})
-  values[localNamespaceName] = exportsOfImportedNamespace
+  const importedNamespaceObj = new Proxy(
+    {},
+    {
+      get(target, prop) {
+        const importedNamespaceResolved = resolveImportPath(
+          namespace,
+          importedNamespace,
+        )
+        const importedNamespaceExports = objGet(
+          exportsLookup,
+          importedNamespaceResolved,
+          {},
+        )
+        const importedNamespaceValues = objGet(
+          valuesLookup,
+          importedNamespaceResolved,
+          {},
+        )
+        const local = importedNamespaceExports[prop]
+        return importedNamespaceValues[local] ?? target[prop]
+      },
+    },
+  )
+
+  values[localNamespaceName] = importedNamespaceObj
 }
 
 /** Returns the context for the evaluation VM */
@@ -167,7 +178,13 @@ export function generateContext(namespace: string) {
           value.importedNamespace,
           emptyLookup(),
         )
-        return exportsValues[value.local]
+        const importedNamespaceValues = objGet(
+          valuesLookup,
+          value.importedNamespace,
+          emptyLookup(),
+        )
+        const importedNamespaceLocal = exportsValues[value.local]
+        return importedNamespaceValues[importedNamespaceLocal]
       }
       // Lastly, fallback to globals
       return target[prop]

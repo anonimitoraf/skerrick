@@ -46,24 +46,51 @@ export function doRegisterExport(
   exported: string,
 ) {
   const exportsValues = objGet(exportsLookup, namespace, {})
+  if (!exportsValues[symbols.namespaceExport])
+    doRegisterNamespaceExport(namespace)
 
   const values = objGet(valuesLookup, namespace, {})
   if (!(local in values)) {
     throw new Error(`Failed named export due to missing local ${local}`)
   }
   exportsValues[exported] = local
-  // TODO Maybe prefix return with `exports.`?
   return exported
 }
 
 function doRegisterDefaultExport(namespace: string, local: string) {
   const exportsValues = objGet(exportsLookup, namespace, {})
+  if (!exportsValues[symbols.namespaceExport])
+    doRegisterNamespaceExport(namespace)
+
   const values = objGet(valuesLookup, namespace, {})
   if (!(local in values)) {
     throw new Error(`Failed default export due to missing local ${local}`)
   }
   exportsValues[symbols.defaultExport] = local
   return symbols.defaultExport.toString()
+}
+
+function doRegisterNamespaceExport(namespace: string) {
+  const exportsValues = objGet(exportsLookup, namespace, {})
+  exportsValues[symbols.namespaceExport] = symbols.namespaceExport
+
+  const values = objGet(valuesLookup, namespace, {})
+  const namespaceObj = new Proxy(
+    {},
+    {
+      get(target, prop) {
+        let key = prop
+        if (prop === 'default') key = symbols.defaultExport
+
+        console.log({ key })
+        const local = exportsValues[key]
+        const values = objGet(valuesLookup, namespace, {})
+        return values[local] ?? target[prop]
+      },
+    },
+  )
+  values[symbols.namespaceExport] = namespaceObj
+  return symbols.namespaceExport.toString()
 }
 
 function doRegisterImport(
@@ -126,36 +153,32 @@ export function doRegisterNamespaceImport(
   localNamespaceName: string,
   importedNamespace: string,
 ) {
-  const values = objGet(valuesLookup, namespace, {})
-  const importedNamespaceObj = new Proxy(
-    {},
-    {
-      get(target, prop) {
-        const importedNamespaceResolved = resolveImportPath(
-          namespace,
-          importedNamespace,
-        )
-        const importedNamespaceExports = objGet(
-          exportsLookup,
-          importedNamespaceResolved,
-          {},
-        )
-        const importedNamespaceValues = objGet(
-          valuesLookup,
-          importedNamespaceResolved,
-          {},
-        )
-
-        let key = prop
-        if (prop === 'default') key = symbols.defaultExport
-        const local = importedNamespaceExports[key]
-        return importedNamespaceValues[local] ?? target[prop]
-      },
-    },
+  const importedNamespaceResolved = resolveImportPath(
+    namespace,
+    importedNamespace,
   )
-
-  values[localNamespaceName] = importedNamespaceObj
-  return importedNamespaceObj
+  const importedNamespaceExports = objGet(
+    exportsLookup,
+    importedNamespaceResolved,
+    {},
+  )
+  if (!(symbols.namespaceExport in importedNamespaceExports)) {
+    throw new Error(
+      `Failed import due to missing namespace export from namespace ${importedNamespaceResolved}`,
+    )
+  }
+  const values = objGet(valuesLookup, namespace, {})
+  console.log({
+    namespace,
+    importedNamespaceResolved,
+    valuesLookup,
+    exportsLookup,
+  })
+  values[localNamespaceName] = new Import(
+    namespace,
+    importedNamespaceResolved,
+    symbols.namespaceExport,
+  )
 }
 
 /** Returns the context for the evaluation VM */
@@ -175,6 +198,7 @@ export function generateContext(namespace: string) {
   base[doRegisterValue.name] = doRegisterValue
   base[doRegisterExport.name] = doRegisterExport
   base[doRegisterDefaultExport.name] = doRegisterDefaultExport
+  base[doRegisterNamespaceExport.name] = doRegisterNamespaceExport
   base[doRegisterImport.name] = doRegisterImport
   base[doRegisterDefaultImport.name] = doRegisterDefaultImport
   base[doRegisterNamespaceImport.name] = doRegisterNamespaceImport
@@ -234,6 +258,14 @@ export function registerDefaultExport(fileName: string, key: string) {
     t.callExpression(t.identifier(doRegisterDefaultExport.name), [
       t.stringLiteral(fileName),
       t.stringLiteral(key),
+    ]),
+  )
+}
+
+export function registerNamespaceExport(fileName: string) {
+  return t.expressionStatement(
+    t.callExpression(t.identifier(doRegisterNamespaceExport.name), [
+      t.stringLiteral(fileName),
     ]),
   )
 }

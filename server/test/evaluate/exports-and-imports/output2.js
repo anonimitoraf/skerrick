@@ -36,7 +36,8 @@ const exports = {
     h: 'h',
     x: 'x',
     y: 'y',
-    x1: 'x'
+    x1: 'x',
+    [Symbol(namespaceExport)]: Symbol(namespaceExport)
   }
 }
 const values = {
@@ -45,7 +46,8 @@ const values = {
     g: '[Function g]',
     h: '[Function h]',
     x: 1.5,
-    y: 2
+    y: 2,
+    [Symbol(namespaceExport)]: '[object Object]'
   },
   'exports-and-imports/input2.js': {
     FFFFF1: 'input1.js :: f1',

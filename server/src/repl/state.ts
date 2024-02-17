@@ -1,8 +1,9 @@
 import vm from 'vm'
 import * as t from '@babel/types'
 import { objGet } from './utils'
-import { resolveImportPath } from './require'
+import { generateRequire, resolveImportPath } from './require'
 import _ from 'lodash'
+import path from 'path'
 
 export const symbols = {
   defaultExport: Symbol('defaultExport'),
@@ -120,7 +121,7 @@ function doRegisterDefaultImport(
   )
 }
 
-function doRegisterNamespaceImport(
+export function doRegisterNamespaceImport(
   namespace: string,
   localNamespaceName: string,
   importedNamespace: string,
@@ -154,6 +155,7 @@ function doRegisterNamespaceImport(
   )
 
   values[localNamespaceName] = importedNamespaceObj
+  return importedNamespaceObj
 }
 
 /** Returns the context for the evaluation VM */
@@ -162,6 +164,14 @@ export function generateContext(namespace: string) {
   for (const k of Object.getOwnPropertyNames(global)) {
     base[k] = global[k]
   }
+
+  base['__dirname'] = path.dirname(namespace)
+  base['__filename'] = namespace
+  base['require'] = (importedNamespace: string) =>
+    generateRequire(namespace, importedNamespace)
+  // TODO Is there any need to add module and exports? given
+  // that we process them at compile time?
+
   base[doRegisterValue.name] = doRegisterValue
   base[doRegisterExport.name] = doRegisterExport
   base[doRegisterDefaultExport.name] = doRegisterDefaultExport

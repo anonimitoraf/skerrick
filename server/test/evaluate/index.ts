@@ -24,9 +24,9 @@ const dirs = isScratch
       "default-exports-and-imports",
       "namespace-exports-and-imports",
       "async",
+      "commonjs",
       // TODO Auto-eval all imports?
       // "imports-built-ins",
-      // "commonjs",
       // "dynamic-imports",
       // "native-addons",
     ];
@@ -66,16 +66,16 @@ const delimiter = "// ---";
           } catch (e) {
             return Promise.resolve(e.stack || e.message);
           }
-        })
+        }),
       ).then((xs) =>
         fs.writeFileSync(
           outputPath,
           xs
             .map((x) =>
-              typeof x === "object" ? JSON.stringify(x, null, 2) : x
+              typeof x === "object" ? JSON.stringify(x, null, 2) : x,
             )
-            .join("\n" + delimiter + "\n")
-        )
+            .join("\n" + delimiter + "\n"),
+        ),
       );
 
       const simplifyLookup = (lookup) => {
@@ -83,14 +83,15 @@ const delimiter = "// ---";
         for (const [ns, values] of Object.entries(lookup)) {
           const formatValue = (value: any) => {
             // Format imports into something like 'input1.js -> f1'
-            if (value instanceof Import)
+            if (value instanceof Import) {
               return `${path.basename(
-                value.importedNamespace
+                value.importedNamespace,
               )} :: ${value.local.toString()}`;
-            else if (typeof value === "function")
-              return `[Function ${value.name}]`;
-            else if (typeof value === "object" && value !== null)
+            } else if (typeof value === "function")
+              return `[Function ${value.name || "(anonymous)"}]`;
+            else if (typeof value === "object" && value !== null) {
               return value.toString();
+            }
             return value;
           };
           // Ensure that both string keys and symbol keys are included
@@ -99,7 +100,7 @@ const delimiter = "// ---";
             _.set(
               simplified,
               [ns.split("/").slice(-2).join("/"), key],
-              formatValue(value)
+              formatValue(value),
             );
           }
           for (const key of Object.getOwnPropertySymbols(values)) {
@@ -107,7 +108,7 @@ const delimiter = "// ---";
             _.set(
               simplified,
               [ns.split("/").slice(-2).join("/"), key],
-              formatValue(value)
+              formatValue(value),
             );
           }
         }
@@ -126,7 +127,7 @@ const delimiter = "// ---";
             util.inspect(simplifiedExports, { depth: Infinity }),
           "const values = " +
             util.inspect(simplifiedValues, { depth: Infinity }),
-        ].join("\n")
+        ].join("\n"),
       );
     }
   }

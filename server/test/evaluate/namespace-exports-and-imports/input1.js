@@ -5,3 +5,6 @@ export function a() {
 export function b() {
   return 2;
 }
+
+const c = 3;
+export default c;

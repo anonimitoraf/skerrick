@@ -144,7 +144,10 @@ function doRegisterNamespaceImport(
           importedNamespaceResolved,
           {},
         )
-        const local = importedNamespaceExports[prop]
+
+        let key = prop
+        if (prop === 'default') key = symbols.defaultExport
+        const local = importedNamespaceExports[key]
         return importedNamespaceValues[local] ?? target[prop]
       },
     },

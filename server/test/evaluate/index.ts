@@ -14,10 +14,10 @@ import _ from "lodash";
 
 const stopServer = serve();
 
-const isScratch = process.argv[2] === "scratch";
+const test = process.argv[2];
 
-const dirs = isScratch
-  ? ["scratchpad"]
+const dirs = test
+  ? [test]
   : [
       "basic",
       "exports-and-imports",

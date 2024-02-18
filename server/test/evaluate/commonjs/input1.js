@@ -11,3 +11,5 @@ class C {
   }
 }
 exports["c"] = C;
+// ---
+module.exports.d = 3;

@@ -82,7 +82,6 @@ function doRegisterNamespaceExport(namespace: string) {
         let key = prop
         if (prop === 'default') key = symbols.defaultExport
 
-        console.log({ key })
         const local = exportsValues[key]
         const values = objGet(valuesLookup, namespace, {})
         return values[local] ?? target[prop]
@@ -168,12 +167,6 @@ export function doRegisterNamespaceImport(
     )
   }
   const values = objGet(valuesLookup, namespace, {})
-  console.log({
-    namespace,
-    importedNamespaceResolved,
-    valuesLookup,
-    exportsLookup,
-  })
   values[localNamespaceName] = new Import(
     namespace,
     importedNamespaceResolved,

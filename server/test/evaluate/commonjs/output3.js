@@ -1,8 +1,15 @@
 A
 // ---
-A1
+A
 // ---
-Symbol(namespaceExport)
+{
+  "X": [
+    "A1A",
+    "AA1"
+  ],
+  "Y": "A1",
+  "Z": "A"
+}
 // --- Environment ---
 const exports = {
   'commonjs/input1.js': {
@@ -36,5 +43,19 @@ const values = {
     __export5: '[object Object]',
     __export6: 'A1A,AA1',
     [Symbol(namespaceExport)]: '[object Object]'
+  },
+  'commonjs/input3.js': {
+    input2: 'input2.js :: Symbol(namespaceExport)',
+    p: 'A1',
+    q: 'A',
+    input2Default: 'input2.js :: Symbol(defaultExport)',
+    r: 'A1',
+    s: 'A',
+    z: 'input2.js :: z',
+    y: 'input2.js :: y',
+    x: 'input2.js :: x',
+    X: 'A1A,AA1',
+    Y: 'A1',
+    Z: 'A'
   }
 }

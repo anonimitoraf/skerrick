@@ -4,6 +4,7 @@ import {
   registerDefaultExport,
   registerExport,
   registerNamespaceExport,
+  registerSpreadExport,
   registerValue,
 } from '../state'
 import { extractFileName, unexpected } from '../utils'
@@ -51,9 +52,19 @@ export function assignmentExpression(
     const local = getRHSAsLocal(path, state, right)
     const bindings = getRHSMultiple(path, state, right)
     path.replaceWithMultiple([
-      ...bindings.map(({ local, exportAs }) =>
-        registerExport(fileName, local, exportAs),
-      ),
+      ...bindings.map((binding) => {
+        // e.g. module.exports = { ...c }
+        // or export default { ...c }
+        if (binding.type === 'spread') {
+          return registerSpreadExport(fileName, binding.local)
+        } else if (binding.type === 'binding') {
+          // e.g. module.exports = { a, b, ... }
+          // or export default { a, b, ... }
+          return registerExport(fileName, binding.local, binding.exportAs)
+        } else {
+          return unexpected(`binding type ${(binding as any).type}`)
+        }
+      }),
       registerDefaultExport(fileName, local),
       registerNamespaceExport(fileName),
     ])
@@ -124,7 +135,6 @@ function getRHSMultiple(
   switch (expr.type) {
     case 'ObjectExpression':
       return extractObjExprBindings(path, state, expr)
-    // TODO Process SpreadElementExpressions
     default:
       return unexpected(`RHS type ${expr.type}`)
   }
@@ -139,8 +149,14 @@ function extractObjExprBindings(
   const { properties } = expr
 
   const bindings = properties.map((prop) => {
-    if (prop.type !== 'ObjectProperty')
+    if (prop.type !== 'ObjectProperty' && prop.type !== 'SpreadElement')
       return unexpected(`ObjectExpression property type ${prop.type}`)
+
+    if (prop.type === 'SpreadElement') {
+      if (prop.argument.type !== 'Identifier')
+        return unexpected(`argument type ${prop.argument.type}`)
+      return { type: 'spread' as const, local: prop.argument.name }
+    }
 
     let exportAs: string
     let local: string
@@ -160,7 +176,7 @@ function extractObjExprBindings(
         break
       case 'AssignmentPattern':
       case 'ObjectPattern':
-      case 'RestElement': // TODO Maybe we want to support this?
+      case 'RestElement':
       case 'ArrayPattern':
         return unexpected(
           `ObjectExpression property value type ${prop.value.type}`,
@@ -172,7 +188,7 @@ function extractObjExprBindings(
         ])
       }
     }
-    return { local, exportAs }
+    return { type: 'binding' as const, local, exportAs }
   })
   return bindings
 }

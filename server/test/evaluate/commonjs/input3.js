@@ -6,8 +6,9 @@ import input2Default from "./input2";
 const r = input2Default.y;
 const s = input2Default.z;
 // ---
-import { x, y, z } from "./input2";
+import { w, x, y, z } from "./input2";
+const W = w;
 const X = x;
 const Y = y;
 const Z = z;
-JSON.stringify({ X, Y, Z }, null, 2);
+JSON.stringify({ W, X, Y, Z }, null, 2);

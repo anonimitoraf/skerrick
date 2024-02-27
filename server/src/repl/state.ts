@@ -37,6 +37,35 @@ function doRegisterValue(namespace: string, key: string, value: any) {
 }
 
 /**
+ * E.g. `module.exports = { a, ...b, c }`, b is a spread element. Each field of
+ * `b` needs to be registered as a value and export in the namespace.
+ */
+function doRegisterSpreadExport(namespace: string, spreadKey: string) {
+  const values = objGet(valuesLookup, namespace, {})
+  if (!(spreadKey in values)) {
+    throw new Error(
+      `Failed to export spread element due to missing local ${spreadKey}`,
+    )
+  }
+  const value = values[spreadKey]
+  if (typeof value !== 'object' || value === null) {
+    throw new Error(
+      `Failed to export spread element ${spreadKey} because it is not an object`,
+    )
+  }
+
+  const exportsValues = objGet(exportsLookup, namespace, {})
+  if (!exportsValues[symbols.namespaceExport])
+    doRegisterNamespaceExport(namespace)
+
+  Object.entries(value).forEach(([key, prop]) => {
+    const id = _.uniqueId(`__spread_${spreadKey}_${key}_`)
+    values[id] = prop
+    exportsValues[key] = id
+  })
+}
+
+/**
  * @param local is the identifier within the namespace
  * @param exported is the identifier exposed to other namespaces
  */
@@ -191,6 +220,7 @@ export function generateContext(namespace: string) {
   base[doRegisterValue.name] = doRegisterValue
   base[doRegisterExport.name] = doRegisterExport
   base[doRegisterDefaultExport.name] = doRegisterDefaultExport
+  base[doRegisterSpreadExport.name] = doRegisterSpreadExport
   base[doRegisterNamespaceExport.name] = doRegisterNamespaceExport
   base[doRegisterImport.name] = doRegisterImport
   base[doRegisterDefaultImport.name] = doRegisterDefaultImport
@@ -273,6 +303,16 @@ export function registerExport(
       t.stringLiteral(fileName),
       t.stringLiteral(key),
       t.stringLiteral(exportAs),
+    ]),
+  )
+}
+
+/** @param key is the identifier of the variable to be spread */
+export function registerSpreadExport(fileName: string, key: string) {
+  return t.expressionStatement(
+    t.callExpression(t.identifier(doRegisterSpreadExport.name), [
+      t.stringLiteral(fileName),
+      t.stringLiteral(key),
     ]),
   )
 }

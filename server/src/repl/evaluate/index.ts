@@ -1,11 +1,11 @@
-import vm from "vm";
-import { generateContext } from "../state";
-import { transform } from "../transform";
+import vm from 'vm'
+import { generateContext } from '../state'
+import { transform } from '../transform'
 
 export function evaluate(namespace: string, code: string) {
-  const codeTransformed = transform(namespace, code);
+  const codeTransformed = transform(namespace, code)
 
-  const context = generateContext(namespace);
+  const context = generateContext(namespace)
   // TODO Pass in generated 'require'
   const result = vm.runInContext(
     `
@@ -19,7 +19,7 @@ export function evaluate(namespace: string, code: string) {
       })();
     `,
     vm.createContext(context),
-    { filename: namespace, displayErrors: true }
-  );
-  return result;
+    { filename: namespace, displayErrors: true },
+  )
+  return result
 }

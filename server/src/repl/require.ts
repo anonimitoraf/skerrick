@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { createRequire } from 'module'
-import { doRegisterNamespaceImport, valuesLookup } from './state'
+import { doRegisterNamespaceImport, exportsLookup, valuesLookup } from './state'
 import { evaluate } from './evaluate'
 import _ from 'lodash'
 
@@ -10,7 +10,7 @@ export function generateRequire(namespace: string, importedNamespace: string) {
     namespace,
     importedNamespace,
   )
-  const isBuiltIn = !path.isAbsolute(importedNamespace)
+  const isBuiltIn = !path.isAbsolute(importedNamespaceResolved)
   if (isBuiltIn) {
     return createRequire(namespace)(importedNamespaceResolved)
   }

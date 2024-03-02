@@ -6,6 +6,7 @@ import { program } from './program'
 import { expressionStatement } from './expression-statement'
 import { importDeclaration } from './import-declaration'
 import { assignmentExpression } from './assignment-expression'
+import { exportAllDeclaration } from './export-all-declaration'
 
 export function transform(namespace: string, code: string) {
   const output = babel.transformSync(code, {
@@ -25,6 +26,7 @@ function transformer() {
       ExpressionStatement: expressionStatement,
       ExportNamedDeclaration: exportNamedDeclaration,
       ExportDefaultDeclaration: exportDefault,
+      ExportAllDeclaration: exportAllDeclaration,
       ImportDeclaration: importDeclaration,
       AssignmentExpression: assignmentExpression,
     },

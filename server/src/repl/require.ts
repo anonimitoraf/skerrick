@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { createRequire } from 'module'
-import { doRegisterNamespaceImport, exportsLookup, valuesLookup } from './state'
+import { doRegisterNamespaceExport, valuesLookup } from './state'
 import { evaluate } from './evaluate'
 import _ from 'lodash'
 
@@ -14,12 +14,8 @@ export function generateRequire(namespace: string, importedNamespace: string) {
   if (isBuiltIn) {
     return createRequire(namespace)(importedNamespaceResolved)
   }
-  const namespaceImport = doRegisterNamespaceImport(
-    namespace,
-    _.uniqueId('__require'),
-    importedNamespace,
-  )
-  return namespaceImport
+  const namespaceExport = doRegisterNamespaceExport(importedNamespaceResolved)
+  return namespaceExport
 }
 
 /**

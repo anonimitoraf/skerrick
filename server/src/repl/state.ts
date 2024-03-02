@@ -99,7 +99,7 @@ function doRegisterDefaultExport(namespace: string, local: string) {
   return symbols.defaultExport.toString()
 }
 
-function doRegisterNamespaceExport(namespace: string) {
+export function doRegisterNamespaceExport(namespace: string) {
   const exportsValues = objGet(exportsLookup, namespace, {})
   exportsValues[symbols.namespaceExport] = symbols.namespaceExport
 
@@ -118,7 +118,7 @@ function doRegisterNamespaceExport(namespace: string) {
     },
   )
   values[symbols.namespaceExport] = namespaceObj
-  return symbols.namespaceExport.toString()
+  return namespaceObj
 }
 
 function doRegisterImport(

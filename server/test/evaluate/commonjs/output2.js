@@ -5,7 +5,7 @@ A
   "z": 2
 }
 // ---
-Symbol(namespaceExport)
+{}
 // --- Environment ---
 const exports = {
   'commonjs/input1.js': {

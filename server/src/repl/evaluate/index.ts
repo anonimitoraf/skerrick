@@ -6,7 +6,6 @@ export function evaluate(namespace: string, code: string) {
   const codeTransformed = transform(namespace, code)
 
   const context = generateContext(namespace)
-  // TODO Pass in generated 'require'
   const result = vm.runInContext(
     `
       (function () {

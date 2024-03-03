@@ -50,24 +50,33 @@ export function assignmentExpression(
     left.property.name === 'exports'
   if (isModuleExports) {
     const local = getRHSAsLocal(path, state, right)
-    const bindings = getRHSMultiple(path, state, right)
-    path.replaceWithMultiple([
-      ...bindings.map((binding) => {
-        // e.g. module.exports = { ...c }
-        // or export default { ...c }
-        if (binding.type === 'spread') {
-          return registerSpreadExport(fileName, binding.local)
-        } else if (binding.type === 'binding') {
-          // e.g. module.exports = { a, b, ... }
-          // or export default { a, b, ... }
-          return registerExport(fileName, binding.local, binding.exportAs)
-        } else {
-          return unexpected(`binding type ${(binding as any).type}`)
+    const expressions: t.ExpressionStatement[] = []
+    switch (right.type) {
+      case 'ObjectExpression': {
+        const bindings = getObjExprBindings(path, state, right)
+        for (const binding of bindings) {
+          // e.g. module.exports = { ...c }
+          // or export default { ...c }
+          if (binding.type === 'spread') {
+            expressions.push(registerSpreadExport(fileName, binding.local))
+          } else if (binding.type === 'binding') {
+            // e.g. module.exports = { a, b, ... }
+            // or export default { a, b, ... }
+            expressions.push(
+              registerExport(fileName, binding.local, binding.exportAs),
+            )
+          } else {
+            return unexpected(`binding type ${(binding as any).type}`)
+          }
         }
-      }),
+        break
+      }
+    }
+    expressions.push(
       registerDefaultExport(fileName, local),
       registerNamespaceExport(fileName),
-    ])
+    )
+    path.replaceWithMultiple(expressions)
     return
   }
 
@@ -127,20 +136,7 @@ function getRHSAsLocal(
  * For example: `module.exports = { a, b }`, RHS would be an object expression
  * with 2 ObjectProperties
  */
-function getRHSMultiple(
-  path: NodePath<t.AssignmentExpression>,
-  state: PluginPass,
-  expr: t.Expression,
-) {
-  switch (expr.type) {
-    case 'ObjectExpression':
-      return extractObjExprBindings(path, state, expr)
-    default:
-      return unexpected(`RHS type ${expr.type}`)
-  }
-}
-
-function extractObjExprBindings(
+function getObjExprBindings(
   path: NodePath<t.AssignmentExpression>,
   state: PluginPass,
   expr: t.ObjectExpression,

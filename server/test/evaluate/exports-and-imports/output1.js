@@ -33,6 +33,16 @@ const values = {
     h: '[Function h]',
     x: 1.5,
     y: 2,
-    [Symbol(namespaceExport)]: '[object Object]'
+    [Symbol(namespaceExport)]: {
+      f: [Function: f],
+      f1: [Function: f],
+      g: [Function: g],
+      g1: [Function: g],
+      g2: [Function: g],
+      h: [Function: h],
+      x: 1.5,
+      y: 2,
+      x1: 1.5
+    }
   }
 }

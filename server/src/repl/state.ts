@@ -8,6 +8,7 @@ import path from 'path'
 export const symbols = {
   defaultExport: Symbol('defaultExport'),
   namespaceExport: Symbol('namespaceExport'),
+  proxyType: Symbol('proxyType'),
 }
 
 type Lookup<TVal = any> = Record<string | symbol, TVal>
@@ -26,7 +27,7 @@ export class Import {
 /** Values by namespace */
 export let valuesLookup: Lookup<Lookup> = {}
 export const resetValuesLookup = () => (valuesLookup = {})
-/** Exports by namespace. The values of which are just identifiers */
+/** Exports by namespace. Keys: export identifiers, values: local identifiers */
 export let exportsLookup: Lookup<Lookup<string | symbol>> = {}
 export const resetExportsLookup = () => (exportsLookup = {})
 
@@ -103,9 +104,8 @@ export function doRegisterNamespaceExport(namespace: string) {
   const exportsValues = objGet(exportsLookup, namespace, {})
   exportsValues[symbols.namespaceExport] = symbols.namespaceExport
 
-  const values = objGet(valuesLookup, namespace, {})
   const namespaceObj = new Proxy(
-    {},
+    { [symbols.proxyType]: 'namespace' },
     {
       get(target, prop) {
         let key = prop
@@ -113,12 +113,78 @@ export function doRegisterNamespaceExport(namespace: string) {
 
         const local = exportsValues[key]
         const values = objGet(valuesLookup, namespace, {})
+
         return values[local] ?? target[prop]
+      },
+      getOwnPropertyDescriptor() {
+        return { enumerable: true, configurable: true }
+      },
+      ownKeys(_target) {
+        const exportValues = objGet(exportsLookup, namespace, {})
+        const keys = [
+          ...Object.getOwnPropertyNames(exportValues),
+          ...Object.getOwnPropertySymbols(exportValues),
+        ]
+        const normalisedKeys = _(keys)
+          .map((key) => (key === symbols.defaultExport ? 'default' : key))
+          .value()
+        return normalisedKeys
       },
     },
   )
+
+  const values = objGet(valuesLookup, namespace, {})
   values[symbols.namespaceExport] = namespaceObj
   return namespaceObj
+}
+
+// E.g. module.exports = require('/re-exported-module')
+// E.g. export * from '/re-exported-module'
+// E.g. export { a, b } from '/re-exported-module'
+// TODO Support only exporting a subset of exports
+export function doRegisterNamespaceReExport(
+  namespace: string,
+  reExportedNamespace: string,
+) {
+  const exportsValues = objGet(exportsLookup, namespace, {})
+  exportsValues[symbols.namespaceExport] = symbols.namespaceExport
+
+  // From this point on, the re-exported namespace will be referred to as
+  // "aux namespace" for brevity
+
+  const auxNamespaceObj = new Proxy(
+    { [symbols.proxyType]: 'namespace:re-export' },
+    {
+      get(target, prop) {
+        let key = prop
+        if (prop === 'default') key = symbols.defaultExport
+
+        const auxExports = objGet(exportsLookup, reExportedNamespace, {})
+        const auxLocal = auxExports[key]
+        const auxValues = objGet(valuesLookup, reExportedNamespace, {})
+
+        return auxValues[auxLocal] ?? target[prop]
+      },
+      getOwnPropertyDescriptor() {
+        return { enumerable: true, configurable: true }
+      },
+      ownKeys(_target) {
+        const auxExports = objGet(exportsLookup, reExportedNamespace, {})
+        const keys = [
+          ...Object.getOwnPropertyNames(auxExports),
+          ...Object.getOwnPropertySymbols(auxExports),
+        ]
+        const normalisedKeys = _(keys)
+          .map((key) => (key === symbols.defaultExport ? 'default' : key))
+          .value()
+        return normalisedKeys
+      },
+    },
+  )
+
+  const values = objGet(valuesLookup, namespace, {})
+  values[symbols.namespaceExport] = auxNamespaceObj
+  return auxNamespaceObj
 }
 
 function doRegisterImport(

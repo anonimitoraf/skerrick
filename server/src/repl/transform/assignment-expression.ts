@@ -52,6 +52,7 @@ export function assignmentExpression(
     const local = getRHSAsLocal(path, state, right)
     const expressions: t.ExpressionStatement[] = []
     switch (right.type) {
+      // e.g. module.exports = { a, b, ...c, d }
       case 'ObjectExpression': {
         const bindings = getObjExprBindings(path, state, right)
         for (const binding of bindings) {
@@ -73,6 +74,9 @@ export function assignmentExpression(
       }
     }
     expressions.push(
+      // To also account for arbitrary cases
+      // e.g. module.exports = require('./module')
+      // e.g. module.exports = ['arbitrary']
       registerDefaultExport(fileName, local),
       registerNamespaceExport(fileName),
     )

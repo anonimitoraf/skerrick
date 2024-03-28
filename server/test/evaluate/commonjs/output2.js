@@ -5,7 +5,24 @@ A
   "z": 2
 }
 // ---
-{}
+{
+  "x": [
+    "A1A",
+    "AA1"
+  ],
+  "y": "A1",
+  "w": "hardcoded",
+  "z": 2,
+  "default": {
+    "x": [
+      "A1A",
+      "AA1"
+    ],
+    "y": "A1",
+    "w": "hardcoded",
+    "z": 2
+  }
+}
 // --- Environment ---
 const exports = {
   'commonjs/input1.js': {
@@ -30,19 +47,25 @@ const values = {
     B: '[Function B]',
     C: '[Function C]',
     __export4: 3,
-    [Symbol(namespaceExport)]: '[object Object]'
+    [Symbol(namespaceExport)]: { a: [Function (anonymous)], b: [Function: B], c: [class C], d: 3 }
   },
   'commonjs/input2.js': {
-    input: '[object Object]',
+    input: { a: [Function (anonymous)], b: [Function: B], c: [class C], d: 3 },
     z: 'A',
     b: '[Function B]',
     y: 'A1',
-    v: '[object Object]',
-    __export5: '[object Object]',
-    __export6: 'A1A,AA1',
+    v: { w: 1, z: 2 },
+    __export5: { x: [ 'A1A', 'AA1' ], y: 'A1', w: 'hardcoded', z: 2 },
+    __export6: [ 'A1A', 'AA1' ],
     __export7: 'hardcoded',
     __spread_v_w_8: 1,
     __spread_v_z_9: 2,
-    [Symbol(namespaceExport)]: '[object Object]'
+    [Symbol(namespaceExport)]: {
+      x: [ 'A1A', 'AA1' ],
+      y: 'A1',
+      w: 'hardcoded',
+      z: 2,
+      default: { x: [ 'A1A', 'AA1' ], y: 'A1', w: 'hardcoded', z: 2 }
+    }
   }
 }

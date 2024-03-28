@@ -13,7 +13,7 @@ const values = {
     a: '[Function a]',
     b: '[Function b]',
     c: 3,
-    [Symbol(namespaceExport)]: '[object Object]'
+    [Symbol(namespaceExport)]: { a: [Function: a], b: [Function: b], default: 3 }
   },
   'namespace-exports-and-imports/input2.js': { input1: 'input1.js :: Symbol(namespaceExport)' }
 }

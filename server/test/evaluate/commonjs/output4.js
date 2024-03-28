@@ -1,15 +1,3 @@
-2
-// ---
-{
-  "W": "hardcoded",
-  "X": [
-    "A1A",
-    "AA1"
-  ],
-  "Y": "A1",
-  "Z": 2
-}
-// ---
 {
   "default": {
     "x": [
@@ -28,6 +16,25 @@
       "w": "hardcoded",
       "z": 2
     }
+  }
+}
+// ---
+{
+  "x": [
+    "A1A",
+    "AA1"
+  ],
+  "y": "A1",
+  "w": "hardcoded",
+  "z": 2,
+  "default": {
+    "x": [
+      "A1A",
+      "AA1"
+    ],
+    "y": "A1",
+    "w": "hardcoded",
+    "z": 2
   }
 }
 // --- Environment ---
@@ -99,5 +106,15 @@ const values = {
       default: { x: [ 'A1A', 'AA1' ], y: 'A1', w: 'hardcoded', z: 2 }
     },
     [Symbol(namespaceExport)]: { default: { [Symbol(proxyType)]: 'namespace' } }
+  },
+  'commonjs/input4.js': {
+    input3: { default: { [Symbol(proxyType)]: 'namespace' } },
+    default3: {
+      x: [ 'A1A', 'AA1' ],
+      y: 'A1',
+      w: 'hardcoded',
+      z: 2,
+      default: { x: [ 'A1A', 'AA1' ], y: 'A1', w: 'hardcoded', z: 2 }
+    }
   }
 }

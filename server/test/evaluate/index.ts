@@ -89,8 +89,13 @@ const delimiter = "// ---";
               )} :: ${value.local.toString()}`;
             } else if (typeof value === "function")
               return `[Function ${value.name || "(anonymous)"}]`;
+            else if (Array.isArray(value))
+              return value.map((v) => formatValue(v));
             else if (typeof value === "object" && value !== null) {
-              return value.toString();
+              return _(Object.keys(value))
+                .map((k) => [k, value[k]])
+                .fromPairs()
+                .value();
             }
             return value;
           };

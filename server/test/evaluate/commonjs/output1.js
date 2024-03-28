@@ -21,6 +21,6 @@ const values = {
     B: '[Function B]',
     C: '[Function C]',
     __export4: 3,
-    [Symbol(namespaceExport)]: '[object Object]'
+    [Symbol(namespaceExport)]: { a: [Function (anonymous)], b: [Function: B], c: [class C], d: 3 }
   }
 }

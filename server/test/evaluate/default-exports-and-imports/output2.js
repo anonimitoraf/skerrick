@@ -11,10 +11,13 @@ const exports = {
   }
 }
 const values = {
-  'default-exports-and-imports/input1.js': { f: '[Function f]', [Symbol(namespaceExport)]: '[object Object]' },
+  'default-exports-and-imports/input1.js': {
+    f: '[Function f]',
+    [Symbol(namespaceExport)]: { default: [Function: f] }
+  },
   'default-exports-and-imports/input2.js': {
     input1: 'input1.js :: Symbol(defaultExport)',
     y: 20,
-    [Symbol(namespaceExport)]: '[object Object]'
+    [Symbol(namespaceExport)]: { default: 20 }
   }
 }

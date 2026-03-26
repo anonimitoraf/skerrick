@@ -37,7 +37,7 @@ const exports = {
     x: 'x',
     y: 'y',
     x1: 'x',
-    [Symbol(namespaceExport)]: Symbol(namespaceExport)
+    Symbol(namespaceExport): Symbol(namespaceExport)
   }
 }
 const values = {
@@ -47,7 +47,7 @@ const values = {
     h: '[Function h]',
     x: 1.5,
     y: 2,
-    [Symbol(namespaceExport)]: {
+    Symbol(namespaceExport): {
       f: [Function: f],
       f1: [Function: f],
       g: [Function: g],

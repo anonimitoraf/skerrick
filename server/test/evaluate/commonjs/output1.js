@@ -12,7 +12,7 @@ const exports = {
     b: 'B',
     c: 'C',
     d: '__export4',
-    [Symbol(namespaceExport)]: Symbol(namespaceExport)
+    Symbol(namespaceExport): Symbol(namespaceExport)
   }
 }
 const values = {
@@ -21,6 +21,6 @@ const values = {
     B: '[Function B]',
     C: '[Function C]',
     __export4: 3,
-    [Symbol(namespaceExport)]: { a: [Function (anonymous)], b: [Function: B], c: [class C], d: 3 }
+    Symbol(namespaceExport): { a: [Function (anonymous)], b: [Function: B], c: [class C], d: 3 }
   }
 }
